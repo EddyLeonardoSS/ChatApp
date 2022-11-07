@@ -1,13 +1,10 @@
 package com.example.chat.models;
 
-import java.util.Set;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 @Entity
@@ -27,8 +24,6 @@ public class User {
     @Column(name = "password")
     private String password;
 
-    
-
     User(){};
 
     User(String username, String email, String password){
@@ -40,7 +35,6 @@ public class User {
     public int getId() {
         return id;
     }
-
 
     public String getUsername() {
         return username;
