@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.chat.models.GroupChat;
 import com.example.chat.models.GroupUser;
@@ -32,22 +33,31 @@ public class ChatController {
     @Autowired
     GroupUserService groupUserService;
     
-    @GetMapping("/messages")
-    public ResponseEntity<List<Message>> getMessages(){
+    // @GetMapping("/messages")
+    // public ResponseEntity<List<Message>> getMessages(){
         
-        return new ResponseEntity<List<Message>>(messageService.findAll(), HttpStatus.OK);
+    //     return new ResponseEntity<List<Message>>(messageService.findAll(), HttpStatus.OK);
+    // }
+
+    @GetMapping("/messages")
+    public ResponseEntity<List<Message>> getMessagesFromGroup(@RequestParam int id ){
+        GroupChat groupChat = groupChatService.findById(id);
+        return new ResponseEntity<List<Message>>(messageService.findMessagesByGroupChat(groupChat), HttpStatus.OK);
     }
 
     @GetMapping("/groups")
-    public ResponseEntity<List<GroupChat>> getGroupChats(){
+    public ResponseEntity<GroupChat> getGroupChats(@RequestParam int id){
         
-        return new ResponseEntity<List<GroupChat>>(groupChatService.findAll(), HttpStatus.OK);
+        return new ResponseEntity<GroupChat>(groupChatService.findById(id), HttpStatus.OK);
     }
+
+    // Currently used to get all group chats that the specified user is a part of
     @GetMapping("/groupusers")
-    public ResponseEntity<List<GroupUser>> getGroupUsers(){
-        
-        return new ResponseEntity<List<GroupUser>>(groupUserService.findAll(), HttpStatus.OK);
+    public ResponseEntity<List<GroupUser>> getGroupUsers(@RequestParam String email){
+        User user = userService.findUserByEmail(email);
+        return new ResponseEntity<List<GroupUser>>(groupUserService.findGroupChatByUser(user), HttpStatus.OK);
     }
+
     @GetMapping("/users")
     public ResponseEntity<List<User>> getUsers(){
         
