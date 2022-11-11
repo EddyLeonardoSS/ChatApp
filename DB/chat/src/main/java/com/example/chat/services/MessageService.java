@@ -22,4 +22,8 @@ public class MessageService {
     public List<Message> findMessagesByGroupChat(GroupChat group){
         return repo.findMessagesByGroupChat(group);
     }
+
+    public void save(Message message) {
+        repo.save(message);
+    }
 }

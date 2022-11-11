@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.chat.models.GroupChat;
@@ -39,11 +41,31 @@ public class ChatController {
     //     return new ResponseEntity<List<Message>>(messageService.findAll(), HttpStatus.OK);
     // }
 
-    @GetMapping("/messages")
+    @GetMapping("/messages/group")
     public ResponseEntity<List<Message>> getMessagesFromGroup(@RequestParam int id ){
         GroupChat groupChat = groupChatService.findById(id);
         return new ResponseEntity<List<Message>>(messageService.findMessagesByGroupChat(groupChat), HttpStatus.OK);
     }
+    @GetMapping("/messages")
+    public ResponseEntity<List<Message>> getMessages(){
+        
+        return new ResponseEntity<List<Message>>(messageService.findAll(), HttpStatus.OK);
+    }
+
+    @PostMapping("/message/send")
+    public ResponseEntity<Message> sendMessage( @RequestBody Message message ){
+        message.setUser(userService.findUserByEmail(message.getUser().getEmail()));
+        if(message.getMessageBody() !=null){
+            messageService.save(new Message(message.getMessageBody(), message.getUser(), message.getGroupChat()));
+            return new ResponseEntity<Message>(message, HttpStatus.CREATED);
+        }
+        else{
+            
+        return new ResponseEntity<Message>(message, HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+        
+    }
+
 
     @GetMapping("/groups")
     public ResponseEntity<GroupChat> getGroupChats(@RequestParam int id){

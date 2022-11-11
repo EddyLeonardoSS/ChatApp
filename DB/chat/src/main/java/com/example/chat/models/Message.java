@@ -36,8 +36,10 @@ public class Message {
 
     Message(){};
 
-    Message(String messageBody){
+    public Message(String messageBody, User user, GroupChat groupChat){
         this.messageBody = messageBody;
+        this.user = user;
+        this.groupChat = groupChat;
     }
 
     public int getId() {
