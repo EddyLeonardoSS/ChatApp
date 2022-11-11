@@ -1,14 +1,21 @@
 import styled from "@emotion/styled";
-import { Avatar, Box, Container, Divider, Grid, List, ListItem, ListItemAvatar, ListItemText, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Container, Divider, Grid, IconButton, InputAdornment, List, ListItem, ListItemAvatar, ListItemText, Stack, TextField, Typography } from "@mui/material";
 import axios from 'axios';
 import { useState, useEffect } from "react";
 import ImageIcon from '@mui/icons-material/Image';
-
+import { grey, purple } from "@mui/material/colors";
+import SendIcon from '@mui/icons-material/Send';
+import { useRef } from "react";
 
 export const Layout = () => {
 
     const [messages, setMessages] = useState([])
+    const [groupMessages, setGroupMessages] = useState([])
     const [groups, setGroups] = useState([])
+    const groupRef = useRef({});
+    const messageRef = useRef({});
+    const userRef = useRef({});
+    
 
     // TEMP Solution before login is setup
     const email = "user1@gmail.com"
@@ -27,37 +34,52 @@ export const Layout = () => {
             .catch(err => console.log(err));
     };
 
-    const displayMessages = async (id) => {
-        axios.get(`http://localhost:8080/messages?id=${id}`)
-            .then(res => setMessages(res.data))
-            .catch(err => console.log(err));
+    const displayMessages = () => {
+        setGroupMessages(messages.filter(message =>  message.groupChat.id === groupRef.current.id))
+        
+    }
 
-
+    const handleSendMessage = (messageBody, user, groupChat) =>{
+        if(messageBody != null && user != null && groupChat != null){
+            axios.post(`http://localhost:8080/message/send`, {messageBody, user, groupChat})
+        }
+        
     }
 
     useEffect(() => {
+        getMessages();
         getGroups();
-    }, [])
+        displayMessages();
+    }, [messages])
     return (
         <>
 
-            <Grid container sx={mainContainer}>
+            <Grid container sx={mainContainer} >
 
-                <Grid item xs={3} sx={allGroupsDiv}>
-                    <List sx={[list, {backgroundColor: "azure"}]} >
+                <Grid item xs={3} sx={allGroupsDiv} >
+                    
+                    <List sx={[list, {  }]} >
                         {
                             // Mapping all the group chat names for current user (user is currently hard-coded by email variable)
                             groups.map(group => {
                                 return (
                                     <>
-                                        <ListItem sx={{ overflow: "hidden"}}>
+                                        <ListItem sx={{ width: "100%", whiteSpace: 'nowrap' }}
+                                         onClick={() => {
+                                            groupRef.current = group.groupChat
+                                            displayMessages(group.groupChat.id)
+                                            
+                                            }}>
                                             <ListItemAvatar>
                                                 <Avatar>
                                                     <ImageIcon></ImageIcon>
                                                 </Avatar>
                                             </ListItemAvatar>
-                                            <ListItemText sx={{wordBreak: "keep-all"}} onClick={() => displayMessages(group.groupChat.id)} key={group.groupChat.id}
-                                                primary={group.groupChat.groupName} secondary="Latest Message here">
+                                            <ListItemText key={group.groupChat.id}
+                                                primary={group.groupChat.groupName}
+                                                secondary={Array.from(messages.filter(message => message.groupChat.id == group.groupChat.id)).reverse()[0].messageBody}
+                                                primaryTypographyProps={{ style: { textOverflow: 'ellipsis', overflow: "hidden" } }}
+                                                secondaryTypographyProps={{ style: { textOverflow: 'ellipsis', overflow: "hidden" } }}>
                                             </ListItemText>
                                         </ListItem>
                                         <Divider variant="inset" component="li" />
@@ -68,50 +90,69 @@ export const Layout = () => {
                     </List>
                 </Grid>
 
-                <Grid item xs={9} sx={chatDiv}>
+                <Grid item xs={9} sx={chatDiv} >
+                    <Grid container direction="column"  wrap="nowrap" sx={{  height: "100%"}}>
 
-                    <Stack spacing={1}  sx={chatStack} >
-                        {
-                            // Mapping all the messages for clicked group chat
-                            messages.map(message => {
+                        <Grid item xs={11.3} sx={{  }} >
+                            <Stack spacing={1} sx={chatStack} >
+                                {
+                                    // Mapping all the messages for clicked group chat
+                                    groupMessages.map(message => {
 
-                                if (message == Array.from(messages.filter(x => x.user.id === 1)).reverse()[0]) {
-                                    return (
-                                        <Box sx={[{ display: "flex", justifyContent: "flex-end"}]} >
-                                        <Box sx={[chatContainer, {textAlign: "right" , maxWidth: "40%"}]} key={message.id}>
-                                            <Typography sx={tailedBubbleUser}>{message.messageBody}</Typography>
-                                        </Box>
-                                        </Box>
-                                    )
-                                }
-                                else if (message.user.id == 1) {
-                                    return (
-                                        <Box sx={[{ display: "flex", justifyContent: "flex-end"}]} >
+                                        if (message == Array.from(groupMessages.filter(x => x.user.id === 1)).reverse()[0]) {
+                                            return (
+                                                <Box sx={[{ display: "flex", justifyContent: "flex-end" }]} >
+                                                    <Box sx={[chatContainer, { textAlign: "right" }]} key={message.id}>
+                                                        <Typography sx={tailedBubbleUser}>{message.messageBody}</Typography>
+                                                    </Box>
+                                                </Box>
+                                            )
+                                        }
+                                        else if (message.user.id == 1) {
+                                            return (
+                                                <Box sx={[{ display: "flex", justifyContent: "flex-end" }]} >
+                                                    <Box sx={[chatContainer, { textAlign: "right" }]} key={message.id}>
+                                                        <Typography sx={bubbleUser}>{message.messageBody}</Typography>
+                                                    </Box>
+                                                </Box>
+                                            )
+                                        }
+                                        if (message == Array.from(messages.filter(x => x.user.id === 2)).reverse()[0]) {
+                                            return (
 
-                                        <Box sx={[chatContainer, { textAlign: "right" , maxWidth: "40%"}]} key={message.id}>
-                                            <Typography sx={bubbleUser}>{message.messageBody}</Typography>
-                                        </Box>
-                                        </Box>
-                                    )
+                                                <Box sx={[chatContainer, { textAlign: "left" }]} key={message.id}>
+                                                    <Typography sx={[tailedBubbleRecp]}>{message.messageBody}</Typography>
+                                                </Box>
+                                            )
+                                        }
+                                        else {
+                                            return (
+                                                <Box sx={[chatContainer, { textAlign: "left" }]} key={message.id}>
+                                                    <Typography sx={chatBubbleRecp}>{message.messageBody}</Typography>
+                                                </Box>
+                                            )
+                                        }
+                                    })
                                 }
-                                if (message == Array.from(messages.filter(x => x.user.id === 2)).reverse()[0]) {
-                                    return (
-                                        
-                                        <Box sx={[chatContainer, { textAlign: "left", maxWidth: "40%" }]} key={message.id}>
-                                            <Typography sx={tailedBubbleRecp}>{message.messageBody}</Typography>
-                                        </Box>
-                                    )
-                                }
-                                else {
-                                    return (
-                                        <Box sx={[chatContainer, { textAlign: "left", maxWidth: "40%" }]} key={message.id}>
-                                            <Typography sx={chatBubbleRecp}>{message.messageBody}</Typography>
-                                        </Box>
-                                    )
-                                }
-                            })
-                        }
-                    </Stack>
+
+                            </Stack>
+                        </Grid>
+
+                        <Grid item xs={0.7}  sx={{ border: "1px solid grey[100]",bgcolor: grey[500],  padding: "5px"}}>
+                            <TextField 
+                            margin="dense"
+                             variant="standard" 
+                             size="small" 
+                             onChange={(e) => messageRef.current = e.target.value}
+                             multiline maxRows={2} 
+                             InputProps={{disableUnderline: true, 
+                                endAdornment: <InputAdornment position="end">
+                                    <IconButton onClick={()=> handleSendMessage(messageRef.current, email, groupRef.current)}><SendIcon/></IconButton></InputAdornment>
+                            }}
+                             sx={{ maxHeight: "100%", width: "98.5%", bgcolor: grey[100], borderRadius: "5em", padding: "5px",}}></TextField>
+                        </Grid>
+                    </Grid>
+
                 </Grid>
 
             </Grid>
@@ -133,8 +174,7 @@ const chatDiv = {
     border: "solid black 2px",
     height: "100%",
     width: "100%",
-    backgroundColor: "azure",
-    overflow: "auto",
+    maxWidth: "100%",
     maxHeight: "100%",
 }
 const stackContainer = {
@@ -155,7 +195,7 @@ const chatStack = {
     height: "98%",
     width: "100%",
     maxHeight: "100%",
-    
+    overflow: "auto",
 }
 
 const mainContainer = {
@@ -163,14 +203,14 @@ const mainContainer = {
     position: "fixed",
     height: "100%",
     width: "100%",
-    
+
 }
 const chatContainer = {
     paddingLeft: '1em',
     paddingRight: '1em',
     position: "relative",
-    
-    
+    maxWidth: "40%"
+
 }
 
 const chatBubbleRecp = {
@@ -217,7 +257,7 @@ const tailedBubbleUser = {
     borderRadius: "1em",
     color: "white",
     display: 'inline-block',
-    
+
     '&:before': {
         content: '""',
         position: "absolute",
@@ -248,7 +288,7 @@ const bubbleUser = {
     borderRadius: "1em",
     color: "white",
     display: 'inline-block',
-    
+
 
 }
 
