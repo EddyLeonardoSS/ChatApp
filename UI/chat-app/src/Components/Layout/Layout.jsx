@@ -1,6 +1,8 @@
-import { Container, Divider, Grid, Stack, Typography } from "@mui/material";
+import styled from "@emotion/styled";
+import { Avatar, Box, Container, Divider, Grid, List, ListItem, ListItemAvatar, ListItemText, Stack, Typography } from "@mui/material";
 import axios from 'axios';
 import { useState, useEffect } from "react";
+import ImageIcon from '@mui/icons-material/Image';
 
 
 export const Layout = () => {
@@ -29,6 +31,8 @@ export const Layout = () => {
         axios.get(`http://localhost:8080/messages?id=${id}`)
             .then(res => setMessages(res.data))
             .catch(err => console.log(err));
+
+
     }
 
     useEffect(() => {
@@ -40,39 +44,71 @@ export const Layout = () => {
             <Grid container sx={mainContainer}>
 
                 <Grid item xs={3} sx={allGroupsDiv}>
-                    <Stack spacing={0.2} divider={<Divider />} sx={stack} >
+                    <List sx={[list, {backgroundColor: "azure"}]} >
                         {
                             // Mapping all the group chat names for current user (user is currently hard-coded by email variable)
                             groups.map(group => {
                                 return (
-                                    <Container sx={stackContainer} onClick={() => displayMessages(group.groupChat.id)} key={group.groupChat.id}>
-                                        <Typography>{group.groupChat.groupName}</Typography>
-                                    </Container>
+                                    <>
+                                        <ListItem sx={{ overflow: "hidden"}}>
+                                            <ListItemAvatar>
+                                                <Avatar>
+                                                    <ImageIcon></ImageIcon>
+                                                </Avatar>
+                                            </ListItemAvatar>
+                                            <ListItemText sx={{wordBreak: "keep-all"}} onClick={() => displayMessages(group.groupChat.id)} key={group.groupChat.id}
+                                                primary={group.groupChat.groupName} secondary="Latest Message here">
+                                            </ListItemText>
+                                        </ListItem>
+                                        <Divider variant="inset" component="li" />
+                                    </>
                                 )
                             })
                         }
-                    </Stack>
+                    </List>
                 </Grid>
 
                 <Grid item xs={9} sx={chatDiv}>
-                    <Stack spacing={0.2} justifyContent="flex-end" sx={stack} >
+
+                    <Stack spacing={1}  sx={chatStack} >
                         {
                             // Mapping all the messages for clicked group chat
                             messages.map(message => {
-                                return (
-                                    <>
-                                        {
-                                            message.user.id == 1 ?
-                                                <Container sx={[{ textAlign: "right" }]} key={message.id}>
-                                                    <Typography>{message.messageBody}</Typography>
-                                                </Container>
-                                                :
-                                                <Container sx={[{ textAlign: "left" }]} key={message.id}>
-                                                    <Typography>{message.messageBody}</Typography>
-                                                </Container>
-                                        }
-                                    </>
-                                )
+
+                                if (message == Array.from(messages.filter(x => x.user.id === 1)).reverse()[0]) {
+                                    return (
+                                        <Box sx={[{ display: "flex", justifyContent: "flex-end"}]} >
+                                        <Box sx={[chatContainer, {textAlign: "right" , maxWidth: "40%"}]} key={message.id}>
+                                            <Typography sx={tailedBubbleUser}>{message.messageBody}</Typography>
+                                        </Box>
+                                        </Box>
+                                    )
+                                }
+                                else if (message.user.id == 1) {
+                                    return (
+                                        <Box sx={[{ display: "flex", justifyContent: "flex-end"}]} >
+
+                                        <Box sx={[chatContainer, { textAlign: "right" , maxWidth: "40%"}]} key={message.id}>
+                                            <Typography sx={bubbleUser}>{message.messageBody}</Typography>
+                                        </Box>
+                                        </Box>
+                                    )
+                                }
+                                if (message == Array.from(messages.filter(x => x.user.id === 2)).reverse()[0]) {
+                                    return (
+                                        
+                                        <Box sx={[chatContainer, { textAlign: "left", maxWidth: "40%" }]} key={message.id}>
+                                            <Typography sx={tailedBubbleRecp}>{message.messageBody}</Typography>
+                                        </Box>
+                                    )
+                                }
+                                else {
+                                    return (
+                                        <Box sx={[chatContainer, { textAlign: "left", maxWidth: "40%" }]} key={message.id}>
+                                            <Typography sx={chatBubbleRecp}>{message.messageBody}</Typography>
+                                        </Box>
+                                    )
+                                }
                             })
                         }
                     </Stack>
@@ -88,28 +124,135 @@ export const Layout = () => {
 
 const allGroupsDiv = {
     border: "solid black 2px",
-    padding: "0px",
     height: "100%",
     width: "100%",
+    minHeight: "100%",
+    overflow: "auto",
 }
 const chatDiv = {
     border: "solid black 2px",
     height: "100%",
     width: "100%",
+    backgroundColor: "azure",
+    overflow: "auto",
+    maxHeight: "100%",
 }
 const stackContainer = {
-    height: "5em",
+    height: "100%",
+    width: "100%",
+    overflow: "auto"
+}
+const list = {
+    margin: "auto",
+    height: "98%",
     width: "100%",
 
 }
-const stack = {
+
+const chatStack = {
     margin: "auto",
-    height: "100%",
+    paddingTop: "1em",
+    height: "98%",
     width: "100%",
+    maxHeight: "100%",
+    
 }
+
 const mainContainer = {
     padding: "2em",
     position: "fixed",
     height: "100%",
-    width: "100%"
+    width: "100%",
+    
 }
+const chatContainer = {
+    paddingLeft: '1em',
+    paddingRight: '1em',
+    position: "relative",
+    
+    
+}
+
+const chatBubbleRecp = {
+    padding: '0.6em',
+    backgroundColor: "#656566",
+    borderRadius: '1em',
+    color: 'white',
+    display: 'inline-block',
+}
+const tailedBubbleRecp = {
+    padding: '0.6em',
+    borderRadius: '1em',
+    backgroundColor: "#656566",
+    color: 'white',
+    display: 'inline-block',
+    // '&:before': {
+    //     content: '""',
+    //     position: "absolute",
+    //     right: "43.5em",
+    //     bottom: "0em",
+    //     zIndex: "0",
+    //     height: "20px",
+    //     width: "20px",
+    //     background: "linear-gradient(to bottom, #656566 0%, #656566 100%)",
+    //     backgroundAttachment: "fixed",
+    //     borderBottomRightRadius: "10px",
+    // },
+    // '&:after': {
+    //     content: '""',
+    //     position: "absolute",
+    //     right: "44.5em",
+    //     bottom: "0em",
+    //     zIndex: "0",
+    //     height: "20px",
+    //     width: "10px",
+    //     background:"white",
+    //     borderBottomRightRadius: "10px",
+    // }
+}
+
+const tailedBubbleUser = {
+    padding: "0.6em",
+    backgroundColor: "#2fa8f8",
+    borderRadius: "1em",
+    color: "white",
+    display: 'inline-block',
+    
+    '&:before': {
+        content: '""',
+        position: "absolute",
+        right: "0.7ch",
+        bottom: "0em",
+        zIndex: "0",
+        height: "20px",
+        width: "20px",
+        background: "linear-gradient(to bottom, #2fa8f8 0%, #2fa8f8 100%)",
+        backgroundAttachment: "fixed",
+        borderBottomLeftRadius: "10px",
+    },
+    '&:after': {
+        content: '""',
+        position: "absolute",
+        right: "0.7ch",
+        bottom: "0em",
+        zIndex: "0",
+        height: "20px",
+        width: "10px",
+        background: "white",
+        borderBottomLeftRadius: "10px",
+    }
+}
+const bubbleUser = {
+    padding: "0.6em",
+    backgroundColor: "#2fa8f8",
+    borderRadius: "1em",
+    color: "white",
+    display: 'inline-block',
+    
+
+}
+
+
+
+
+
