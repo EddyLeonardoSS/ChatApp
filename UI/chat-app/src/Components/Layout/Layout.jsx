@@ -18,7 +18,7 @@ export const Layout = () => {
     
 
     // TEMP Solution before login is setup
-    const email = "user2@gmail.com"
+    const email = "user1@gmail.com"
 
     const getMessages = async () => {
         axios.get("http://localhost:8080/messages")
@@ -77,7 +77,7 @@ export const Layout = () => {
                                             </ListItemAvatar>
                                             <ListItemText key={group.groupChat.id}
                                                 primary={group.groupChat.groupName}
-                                                secondary={Array.from(messages.filter(message => message.groupChat.id == group.groupChat.id)).reverse()[0].messageBody}
+                                                secondary={messages.filter(message => message.groupChat.id == group.groupChat.id).reverse()[0].messageBody}
                                                 primaryTypographyProps={{ style: { textOverflow: 'ellipsis', overflow: "hidden" } }}
                                                 secondaryTypographyProps={{ style: { textOverflow: 'ellipsis', overflow: "hidden" } }}>
                                             </ListItemText>
@@ -93,13 +93,13 @@ export const Layout = () => {
                 <Grid item xs={9} sx={chatDiv} >
                     <Grid container direction="column"  wrap="nowrap" sx={{  height: "100%"}}>
 
-                        <Grid item xs={11.3} sx={{  }} >
-                            <Stack spacing={1} sx={chatStack} >
+                        <Grid item xs={11.3} sx={{maxHeight: "100%", overflow: "auto",}} >
+                            <Stack spacing={1} sx={[chatStack, {flexDirection: "column-reverse"}]} >
                                 {
                                     // Mapping all the messages for clicked group chat
                                     groupMessages.map(message => {
 
-                                        if (message == Array.from(groupMessages.filter(x => x.user.id === 2)).reverse()[0]) {
+                                        if (message == groupMessages.filter(x => x.user.id === 1).reverse()[0]) {
                                             return (
                                                 <Box sx={[{ display: "flex", justifyContent: "flex-end" }]} >
                                                     <Box sx={chatContainer} key={message.id}>
@@ -108,7 +108,7 @@ export const Layout = () => {
                                                 </Box>
                                             )
                                         }
-                                        else if (message.user.id == 2) {
+                                        else if (message.user.id == 1) {
                                             return (
                                                 <Box sx={[{ display: "flex", justifyContent: "flex-end" }]} >
                                                     <Box sx={chatContainer} key={message.id}>
@@ -117,7 +117,7 @@ export const Layout = () => {
                                                 </Box>
                                             )
                                         }
-                                        if (message == Array.from(messages.filter(x => x.user.id === 1)).reverse()[0]) {
+                                        if (message == messages.filter(x => x.user.id === 2).reverse()[0]) {
                                             return (
 
                                                 <Box sx={chatContainer} key={message.id}>
@@ -132,12 +132,12 @@ export const Layout = () => {
                                                 </Box>
                                             )
                                         }
-                                    })
+                                    }).reverse()
                                 }
 
                             </Stack>
+                            
                         </Grid>
-
                         <Grid item xs={0.7}  sx={{ border: "1px solid grey[100]",bgcolor: grey[500],  padding: "5px"}}>
                             <TextField 
                             margin="dense"
@@ -160,7 +160,6 @@ export const Layout = () => {
         </>
     )
 
-    {/* {messages.map(x => <p>{x.messageBody}</p>)} */ }
 }
 
 const allGroupsDiv = {
@@ -191,11 +190,13 @@ const list = {
 
 const chatStack = {
     margin: "auto",
-    paddingTop: "1em",
+    paddingBottom: "1em",
     height: "98%",
     width: "100%",
     maxHeight: "100%",
     overflow: "auto",
+
+    
 }
 
 const mainContainer = {
