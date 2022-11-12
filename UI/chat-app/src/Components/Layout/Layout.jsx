@@ -18,7 +18,7 @@ export const Layout = () => {
     
 
     // TEMP Solution before login is setup
-    const email = "user1@gmail.com"
+    const email = "user2@gmail.com"
 
     const getMessages = async () => {
         axios.get("http://localhost:8080/messages")
