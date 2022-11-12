@@ -18,7 +18,7 @@ export const Layout = () => {
     
 
     // TEMP Solution before login is setup
-    const email = "user1@gmail.com"
+    const email = "user2@gmail.com"
 
     const getMessages = async () => {
         axios.get("http://localhost:8080/messages")
@@ -99,35 +99,35 @@ export const Layout = () => {
                                     // Mapping all the messages for clicked group chat
                                     groupMessages.map(message => {
 
-                                        if (message == Array.from(groupMessages.filter(x => x.user.id === 1)).reverse()[0]) {
+                                        if (message == Array.from(groupMessages.filter(x => x.user.id === 2)).reverse()[0]) {
                                             return (
                                                 <Box sx={[{ display: "flex", justifyContent: "flex-end" }]} >
-                                                    <Box sx={[chatContainer, { textAlign: "right" }]} key={message.id}>
+                                                    <Box sx={chatContainer} key={message.id}>
                                                         <Typography sx={tailedBubbleUser}>{message.messageBody}</Typography>
                                                     </Box>
                                                 </Box>
                                             )
                                         }
-                                        else if (message.user.id == 1) {
+                                        else if (message.user.id == 2) {
                                             return (
                                                 <Box sx={[{ display: "flex", justifyContent: "flex-end" }]} >
-                                                    <Box sx={[chatContainer, { textAlign: "right" }]} key={message.id}>
+                                                    <Box sx={chatContainer} key={message.id}>
                                                         <Typography sx={bubbleUser}>{message.messageBody}</Typography>
                                                     </Box>
                                                 </Box>
                                             )
                                         }
-                                        if (message == Array.from(messages.filter(x => x.user.id === 2)).reverse()[0]) {
+                                        if (message == Array.from(messages.filter(x => x.user.id === 1)).reverse()[0]) {
                                             return (
 
-                                                <Box sx={[chatContainer, { textAlign: "left" }]} key={message.id}>
+                                                <Box sx={chatContainer} key={message.id}>
                                                     <Typography sx={[tailedBubbleRecp]}>{message.messageBody}</Typography>
                                                 </Box>
                                             )
                                         }
                                         else {
                                             return (
-                                                <Box sx={[chatContainer, { textAlign: "left" }]} key={message.id}>
+                                                <Box sx={chatContainer} key={message.id}>
                                                     <Typography sx={chatBubbleRecp}>{message.messageBody}</Typography>
                                                 </Box>
                                             )
@@ -209,8 +209,8 @@ const chatContainer = {
     paddingLeft: '1em',
     paddingRight: '1em',
     position: "relative",
-    maxWidth: "40%"
-
+    maxWidth: "40%",
+    
 }
 
 const chatBubbleRecp = {
@@ -221,34 +221,36 @@ const chatBubbleRecp = {
     display: 'inline-block',
 }
 const tailedBubbleRecp = {
+    
     padding: '0.6em',
     borderRadius: '1em',
     backgroundColor: "#656566",
     color: 'white',
     display: 'inline-block',
-    // '&:before': {
-    //     content: '""',
-    //     position: "absolute",
-    //     right: "43.5em",
-    //     bottom: "0em",
-    //     zIndex: "0",
-    //     height: "20px",
-    //     width: "20px",
-    //     background: "linear-gradient(to bottom, #656566 0%, #656566 100%)",
-    //     backgroundAttachment: "fixed",
-    //     borderBottomRightRadius: "10px",
-    // },
-    // '&:after': {
-    //     content: '""',
-    //     position: "absolute",
-    //     right: "44.5em",
-    //     bottom: "0em",
-    //     zIndex: "0",
-    //     height: "20px",
-    //     width: "10px",
-    //     background:"white",
-    //     borderBottomRightRadius: "10px",
-    // }
+    
+    '&:before': {
+        content: '""',
+        position: "absolute",
+        left: "0.38em",
+        bottom: "0em",
+        zIndex: "-1",
+        height: "20px",
+        width: "20px",
+        background: "linear-gradient(to bottom, #656566 0%, #656566 100%)",
+        backgroundAttachment: "fixed",
+        borderBottomRightRadius: "10px",
+    },
+    '&:after': {
+        content: '""',
+        position: "absolute",
+        left: "0.38em",
+        bottom: "0em",
+        zIndex: "-1",
+        height: "20px",
+        width: "10px",
+        background:"white",
+        borderBottomRightRadius: "10px",
+    }
 }
 
 const tailedBubbleUser = {
@@ -257,13 +259,12 @@ const tailedBubbleUser = {
     borderRadius: "1em",
     color: "white",
     display: 'inline-block',
-
     '&:before': {
         content: '""',
         position: "absolute",
-        right: "0.7ch",
+        right: "0.35em",
         bottom: "0em",
-        zIndex: "0",
+        zIndex: "-1",
         height: "20px",
         width: "20px",
         background: "linear-gradient(to bottom, #2fa8f8 0%, #2fa8f8 100%)",
@@ -273,9 +274,9 @@ const tailedBubbleUser = {
     '&:after': {
         content: '""',
         position: "absolute",
-        right: "0.7ch",
+        right: "0.35em",
         bottom: "0em",
-        zIndex: "0",
+        zIndex: "-1",
         height: "20px",
         width: "10px",
         background: "white",
