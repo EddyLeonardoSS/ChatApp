@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.chat.models.GroupChat;
 import com.example.chat.models.Message;
+import com.example.chat.models.User;
 import com.example.chat.repositories.MessageRepository;
 
 @Service
@@ -26,4 +27,6 @@ public class MessageService {
     public void save(Message message) {
         repo.save(message);
     }
+
+    
 }
