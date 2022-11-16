@@ -37,64 +37,101 @@ public class ChatController {
 
     @Autowired
     GroupUserService groupUserService;
-    
-   
+
     // Retrieves the messages for a specific group when click on the front-end
     @GetMapping("/messages/group")
-    public ResponseEntity<List<Message>> getMessagesFromGroup(@RequestParam int id ){
-        GroupChat groupChat = groupChatService.findById(id);
-        return new ResponseEntity<List<Message>>(messageService.findMessagesByGroupChat(groupChat), HttpStatus.OK);
+    public ResponseEntity<List<Message>> getMessagesFromGroup(@RequestParam int id) {
+
+        try {
+            GroupChat groupChat = groupChatService.findById(id);
+            return new ResponseEntity<List<Message>>(messageService.findMessagesByGroupChat(groupChat), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
     }
 
     // Filters for the last message sent to each group for the current user
     @GetMapping("/lastmessage/group")
-    public ResponseEntity<List<Message>> getLastMessage(@RequestParam String email){
-        User user = userService.findUserByEmail(email);
-        List<GroupUser> userGroups = groupUserService.findGroupChatByUser(user);
-        List<Message> messages = messageService.findAll();
-        ArrayList<Message> lastMessages = new ArrayList<Message>();
+    public ResponseEntity<List<Message>> getLastMessage(@RequestParam String email) {
 
-        userGroups.forEach(group -> {
-          lastMessages.addAll( messages.stream().filter(message -> message.getGroupChat().getId() == group.getGroupChat().getId())
-                                .max((o1, o2) -> o1.getId() - o2.getId()).stream().collect(Collectors.toList())) ;
-        });
-        return new ResponseEntity<List<Message>>(lastMessages, HttpStatus.OK);
+        try {
+            User user = userService.findUserByEmail(email);
+            List<GroupUser> userGroups = groupUserService.findGroupChatByUser(user);
+            List<Message> messages = messageService.findAll();
+            ArrayList<Message> lastMessages = new ArrayList<Message>();
+
+            userGroups.forEach(group -> {
+                lastMessages.addAll(messages.stream()
+                        .filter(message -> message.getGroupChat().getId() == group.getGroupChat().getId())
+                        .max((o1, o2) -> o1.getId() - o2.getId()).stream().collect(Collectors.toList()));
+            });
+
+            return new ResponseEntity<List<Message>>(lastMessages, HttpStatus.OK);
+
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
     }
 
     // Receives a message from the front-end and saves it to the database
     @PostMapping("/message/send")
-    public ResponseEntity<Message> sendMessage( @RequestBody Message message ){
+    public ResponseEntity<Message> sendMessage(@RequestBody Message message) {
         message.setUser(userService.findUserByEmail(message.getUser().getEmail()));
-        try{
+        try {
             messageService.save(new Message(message.getMessageBody(), message.getUser(), message.getGroupChat()));
             return new ResponseEntity<Message>(message, HttpStatus.CREATED);
-        }
-        catch (Exception e){
-            return new ResponseEntity<Message>(message, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
-    
+
     // Gets all group chats that the specified user is a part of
     @GetMapping("/groupusers")
-    public ResponseEntity<List<GroupUser>> getGroupUsers(@RequestParam String email){
-        User user = userService.findUserByEmail(email);
-        return new ResponseEntity<List<GroupUser>>(groupUserService.findGroupChatByUser(user), HttpStatus.OK);
+    public ResponseEntity<List<GroupUser>> getGroupUsers(@RequestParam String email) {
+        try {
+            User user = userService.findUserByEmail(email);
+            return new ResponseEntity<List<GroupUser>>(groupUserService.findGroupChatByUser(user), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
     }
 
+    // Gets all users and filters out current user
     @GetMapping("/users")
-    public ResponseEntity<List<User>> getUsers(@RequestParam String email){
-        List<User> users = userService.findAll().stream().filter(user -> !user.getEmail().equals(email)).collect(Collectors.toList());
-        return new ResponseEntity<List<User>>(users, HttpStatus.OK);
+    public ResponseEntity<List<User>> getUsers(@RequestParam String email) {
+
+        try {
+            List<User> users = userService.findAll().stream().filter(user -> !user.getEmail().equals(email))
+                    .collect(Collectors.toList());
+            return new ResponseEntity<List<User>>(users, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
     }
 
-    
+    // JSON object consist of {email, groupName, users}
+    // email may be temporary until login is implemented
+    // groupName is a string
+    // users is an array of strings containing user emails
+    // Creates a new GroupChat and creates new GroupUser objects to relate each user to the GroupChat
     @PostMapping("/groupchat/new")
-    public ResponseEntity<List<GroupUser>> addGroups(@RequestBody JsonNode groupObject) throws NoSuchFieldException, SecurityException{
-        GroupChat newGroupChat = groupChatService.save( new GroupChat(groupObject.get("groupName").asText()));
+    public ResponseEntity<List<GroupUser>> addGroups(@RequestBody JsonNode groupObject) {
+        try {
 
-        groupObject.get("users").forEach(x -> groupUserService.save(new GroupUser(userService.findUserByEmail(x.asText()), newGroupChat)));
-        return new ResponseEntity<List<GroupUser>>(groupUserService.findGroupChatByUser( userService.findUserByEmail(groupObject.get("email").asText())), HttpStatus.CREATED);
+            GroupChat newGroupChat = groupChatService.save(new GroupChat(groupObject.get("groupName").asText()));
+            groupObject.get("users").forEach(
+                    x -> groupUserService.save(new GroupUser(userService.findUserByEmail(x.asText()), newGroupChat)));
+
+            return new ResponseEntity<List<GroupUser>>(groupUserService.findGroupChatByUser(
+                            userService.findUserByEmail(groupObject.get("email").asText())), HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
     }
 
-    
 }
