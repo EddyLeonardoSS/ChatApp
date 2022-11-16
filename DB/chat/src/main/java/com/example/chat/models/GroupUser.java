@@ -26,7 +26,7 @@ public class GroupUser {
 
     GroupUser(){};
 
-    GroupUser(User userId, GroupChat groupChat){
+    public GroupUser(User userId, GroupChat groupChat){
         this.userId = userId;
         this.groupChat = groupChat;
     }

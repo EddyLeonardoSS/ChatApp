@@ -22,5 +22,9 @@ public class GroupChatService {
         return repo.findById(id);
     }
 
+    public GroupChat save(GroupChat groupChat) {
+        return repo.save(groupChat);
+    }
+
     
 }

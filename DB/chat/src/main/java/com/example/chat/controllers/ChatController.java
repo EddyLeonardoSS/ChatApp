@@ -2,9 +2,7 @@ package com.example.chat.controllers;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +20,7 @@ import com.example.chat.services.GroupChatService;
 import com.example.chat.services.GroupUserService;
 import com.example.chat.services.MessageService;
 import com.example.chat.services.UserService;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @RestController
 @CrossOrigin(value = "*")
@@ -53,7 +52,6 @@ public class ChatController {
         User user = userService.findUserByEmail(email);
         List<GroupUser> userGroups = groupUserService.findGroupChatByUser(user);
         List<Message> messages = messageService.findAll();
-
         ArrayList<Message> lastMessages = new ArrayList<Message>();
 
         userGroups.forEach(group -> {
@@ -74,15 +72,28 @@ public class ChatController {
         catch (Exception e){
             return new ResponseEntity<Message>(message, HttpStatus.BAD_REQUEST);
         }
-        
-        
     }
-
+    
     // Gets all group chats that the specified user is a part of
     @GetMapping("/groupusers")
     public ResponseEntity<List<GroupUser>> getGroupUsers(@RequestParam String email){
         User user = userService.findUserByEmail(email);
         return new ResponseEntity<List<GroupUser>>(groupUserService.findGroupChatByUser(user), HttpStatus.OK);
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<List<User>> getUsers(@RequestParam String email){
+        List<User> users = userService.findAll().stream().filter(user -> !user.getEmail().equals(email)).collect(Collectors.toList());
+        return new ResponseEntity<List<User>>(users, HttpStatus.OK);
+    }
+
+    
+    @PostMapping("/groupchat/new")
+    public ResponseEntity<List<GroupUser>> addGroups(@RequestBody JsonNode groupObject) throws NoSuchFieldException, SecurityException{
+        GroupChat newGroupChat = groupChatService.save( new GroupChat(groupObject.get("groupName").asText()));
+
+        groupObject.get("users").forEach(x -> groupUserService.save(new GroupUser(userService.findUserByEmail(x.asText()), newGroupChat)));
+        return new ResponseEntity<List<GroupUser>>(groupUserService.findGroupChatByUser( userService.findUserByEmail(groupObject.get("email").asText())), HttpStatus.CREATED);
     }
 
     

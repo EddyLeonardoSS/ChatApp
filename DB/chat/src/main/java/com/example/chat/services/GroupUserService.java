@@ -21,4 +21,8 @@ public class GroupUserService {
     public List<GroupUser> findGroupChatByUser(User user){
         return repo.findByUser(user);
     }
+    
+    public Object save(GroupUser groupUser) {
+        return repo.save(groupUser);
+    }
 }
