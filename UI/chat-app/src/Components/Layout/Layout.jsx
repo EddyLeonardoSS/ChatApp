@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import { Avatar, Box, Container, Divider, Grid, IconButton, InputAdornment, List, ListItem, ListItemAvatar, ListItemText, Menu, MenuItem, MenuList, Modal, Select, Stack, TextField, Typography } from "@mui/material";
+import { Avatar, Box, Button, Container, Divider, FormControl, Grid, IconButton, InputAdornment, InputLabel, List, ListItem, ListItemAvatar, ListItemText, Menu, MenuItem, MenuList, Modal, Paper, Select, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import axios from 'axios';
 import { useState, useEffect } from "react";
 import ImageIcon from '@mui/icons-material/Image';
@@ -11,26 +11,51 @@ import { GroupList } from "../GroupList/GroupList";
 import { Chat } from "../Chat/Chat";
 import { useReducer } from "react";
 import AddIcon from '@mui/icons-material/Add';
+import { SelectChangeEvent } from '@mui/material/Select';
 export const Layout = () => {
 
     const [messages, setMessages] = useState([])
     const [groupMessages, setGroupMessages] = useState([])
     const [groups, setGroups] = useState([])
+    const [otherUsers, setOtherUsers] = useState([])
+    const [isLoaded, setIsLoaded] = useState(false)
     const groupRef = useRef();
-    const messageRef = useRef({});
-    const userRef = useRef({});
+    const [sendMessage, setSendMessage] = useState("");
+    
+    const [search, setSearch] = useState("");
+
     const [open, setOpen] = useState(false);
 
-    let value= ""
+    
+    const [groupName, setGroupName] = useState("")
 
     // TEMP Solution before login is setup
     const email = "user1@gmail.com"
+    const [addedUsers, setAddedUsers] = useState([email])
+    
 
+    const filterSearch = (searched, data) => {
+        
+        if(searched == ""){
+            return data;
+        }
+        else {
+            return data.filter((d) => d.username.toLowerCase().includes(searched) )
+        }
+    }
+    const filteredSearch = filterSearch(search, otherUsers);
 
+    const getUsers = async (email) => {
+        axios.get(`http://localhost:8080/users?email=${email}`)
+        .then(res => setOtherUsers(res.data))
+        .catch(err => console.log(err))
+
+    }
     const getGroups = async () => {
         axios.get(`http://localhost:8080/groupusers?email=${email}`)
             .then(res => {
                 setGroups(res.data)
+                setIsLoaded(true);
             })
             .catch(err => console.log(err));
         axios.get(`http://localhost:8080/lastmessage/group?email=${email}`)
@@ -39,7 +64,7 @@ export const Layout = () => {
 
             })
             .catch(err => console.log(err));
-
+        
     };
     const displayMessages = async (id) => {
         axios.get(`http://localhost:8080/messages/group?id=${id}`)
@@ -54,11 +79,29 @@ export const Layout = () => {
         }
 
     }
-    const handleAddGroup = async (messageBody, user, groupChat) => {
-
-
+    const handleAddGroup = async (groupName, users) => {
+        axios.post(`http://localhost:8080/groupchat/new`, { email, groupName,  users} )
+        .then(res => {
+            setGroups(res.data)
+        })
+        
     }
-    const handleOpen = () => setOpen(true);
+
+    const addUser = (user) => {
+        if(addedUsers.includes(user)){
+            console.log("user already added");
+        }
+        else {
+            setAddedUsers([...addedUsers, user])
+        }
+    }
+
+    
+    const handleOpen = () => {
+        getUsers(email);
+        setOpen(true)
+        
+    };
     const handleClose = () => setOpen(false);
 
     useEffect(() => {
@@ -67,39 +110,58 @@ export const Layout = () => {
 
     return (
         <>
-        <Modal open={open} onClose={handleClose} >
-                    <Box sx={createGroup}>
-                        
-                        <TextField variant="standard" label="Group Name">Group Name</TextField>
-                        
-                        <TextField variant="standard" label="Group Name">Group Name</TextField>
-                        
-                    </Box>
-                </Modal>
+        
+            <Modal open={open} onClose={handleClose} >
+                <Box sx={createGroup}>
+
+                    <TextField id="group-name" variant="standard" label="Group Name" onInput={e => setGroupName(e.target.value)} >Group Name</TextField>
+                    
+                    <TextField variant="standard" label="Users" onInput={e => setSearch(e.target.value)}>Users</TextField>
+                        {
+                            filteredSearch.map((input => {
+                               return(
+                                <Box sx ={{display: "flex"}}>
+                                    <MenuItem key={input.id} onClick={() => addUser(input.email)}>{input.username}</MenuItem>
+                                </Box>
+                               )
+                            }))
+                        }
+                    <Button onClick={() => handleAddGroup(groupName, addedUsers)}>Create Group</Button>
+                    
+                </Box>
+            </Modal>
             <Grid container sx={mainContainer} >
-                
+            
                 <Grid item xs={3} sx={allGroupsDiv} >
-                    <Grid container direction="column" wrap="nowrap" sx={{ height: "100%" }}>
-                        <Grid item xs={0.4}>
-                            <Box sx={{ backgroundColor: blue[300], justifyContent: "space-between", alignItems: "center", display: "flex", height: "100%", width: "100%" }}>
+                {/* Left column containg list of groups and add group button */}
+                    <Grid container direction="column" wrap="nowrap" sx={{ height: "100%" }}> 
+                    
+                    {/* Grid containing the add groups button */}
+                        <Grid item > 
+                            <Box sx={{ backgroundColor: blue[300], justifyContent: "space-between", alignItems: "center", display: "flex", height: "100%", width: "100%", borderBottom: "1px solid black"}}>
 
                                 <Typography sx={{ fontWeight: "bold", margin: "auto" }}>Messages</Typography>
                                 <IconButton onClick={handleOpen}><AddIcon sx={{}} /></IconButton>
-
                             </Box>
                         </Grid>
-                        <Grid item >
+                        
+                        {/* Grid containing the list of groups */}
+                        <Grid item > 
+                            { isLoaded ?
                             <List sx={[list, {}]} >
                                 {
                                     // Mapping all the group chat names for current user (user is currently hard-coded by email variable)
                                     groups.map(group => {
+                                        // holds the last message sent to the group for displaying in the group list
+                                        let lastMessage = groupMessages.filter(groupMessage =>
+                                            groupMessage.groupChat.id == group.groupChat.id)[0]
+                                            
                                         return (
                                             <>
                                                 <ListItem sx={{ width: "100%", whiteSpace: 'nowrap', }}
                                                     onClick={() => {
                                                         groupRef.current = group.groupChat
                                                         displayMessages(group.groupChat.id)
-
                                                     }}>
                                                     <ListItemAvatar>
                                                         <Avatar>
@@ -108,8 +170,7 @@ export const Layout = () => {
                                                     </ListItemAvatar>
                                                     <ListItemText key={group.groupChat.id}
                                                         primary={group.groupChat.groupName}
-                                                        secondary={groupMessages.filter(groupMessage =>
-                                                            groupMessage.groupChat.id = group.groupChat.id)[group.groupChat.id - 1].messageBody}
+                                                        secondary={lastMessage !== null ? lastMessage.messageBody : ""}
                                                         primaryTypographyProps={{ style: { textOverflow: 'ellipsis', overflow: "hidden" } }}
                                                         secondaryTypographyProps={{ style: { textOverflow: 'ellipsis', overflow: "hidden" } }}>
                                                     </ListItemText>
@@ -120,13 +181,23 @@ export const Layout = () => {
                                     })
                                 }
                             </List>
+                            :
+                            <Skeleton></Skeleton>
+                        }
                         </Grid>
                     </Grid>
                 </Grid>
 
                 <Grid item xs={9} sx={chatDiv} >
+                    {/* Grid containing chat messages and the typing bar for sending messages */}
                     <Grid container direction="column" wrap="nowrap" sx={{ height: "100%" }}>
+                        <Grid item > 
+                            <Box sx={topBarChat}>
+                                <Typography sx={{ fontWeight: "bold", margin: "auto" }}>{groupRef.current != null ? groupRef.current.groupName : "No Group Selected"}</Typography>
+                            </Box>
+                        </Grid>
 
+                        {/* Grid containing chat messages */}
                         <Grid item xs={11.3} sx={{ maxHeight: "100%", overflow: "auto", }} >
                             <Stack spacing={1} sx={[chatStack, { flexDirection: "column-reverse" }]} >
                                 {
@@ -172,24 +243,30 @@ export const Layout = () => {
                             </Stack>
 
                         </Grid>
+                        {/* Grid containing the typing bar for sending messages */}
                         <Grid item xs={0.7} sx={{ border: "1px solid grey[100]", bgcolor: grey[500], padding: "5px" }}>
                             <TextField
                                 margin="dense"
                                 variant="standard"
                                 size="small"
-                                onChange={(e) => messageRef.current = e.target.value}
+                                value={sendMessage}
+                                placeholder="Enter Message..."
+                                onChange={(e) => setSendMessage(e.target.value)}
                                 multiline maxRows={2}
                                 InputProps={{
                                     disableUnderline: true,
                                     endAdornment: <InputAdornment position="end">
-                                        <IconButton onClick={() => handleSendMessage(messageRef.current, email, groupRef.current)}><SendIcon /></IconButton></InputAdornment>
+                                    <IconButton onClick={() => {
+                                        handleSendMessage(sendMessage, email, groupRef.current)
+                                        setSendMessage("")
+                                    }}><SendIcon /></IconButton></InputAdornment>
                                 }}
                                 sx={{ maxHeight: "100%", width: "98.5%", bgcolor: grey[100], borderRadius: "5em", padding: "5px", }}></TextField>
                         </Grid>
                     </Grid>
 
                 </Grid>
-
+                
             </Grid>
 
         </>
@@ -197,15 +274,16 @@ export const Layout = () => {
 
 }
 
+// Functions that serve as CSS styling for components
+
 const allGroupsDiv = {
-    border: "solid black 2px",
     height: "100%",
     width: "100%",
     minHeight: "100%",
     overflow: "auto",
 }
 const chatDiv = {
-    border: "solid black 2px",
+    borderLeft: "solid black 2px",
     height: "100%",
     width: "100%",
     maxWidth: "100%",
@@ -234,8 +312,12 @@ const chatStack = {
 
 }
 
+const topBarChat = {
+    backgroundColor: blue[300], justifyContent: "space-between", alignItems: "center", display: "flex", height: "100%", width: "100%" , padding: "4px",
+    borderBottom: "1px solid black"
+}
+
 const mainContainer = {
-    padding: "2em",
     position: "fixed",
     height: "100%",
     width: "100%",
@@ -326,20 +408,17 @@ const bubbleUser = {
 }
 
 const createGroup = {
-    position: 'absolute' ,
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: "20%",
-  height: "50%",
-  bgcolor: 'background.paper',
-  border: '2px solid #000',
-  boxShadow: 24,
-  p: 4,
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "space-between"
-  
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: "20%",
+    height: "50%",
+    bgcolor: 'background.paper',
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+
 }
 
 
