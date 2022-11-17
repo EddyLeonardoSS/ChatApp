@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import { Avatar, Box, Button, Container, Divider, FormControl, Grid, IconButton, InputAdornment, InputLabel, List, ListItem, ListItemAvatar, ListItemText, Menu, MenuItem, MenuList, Modal, Paper, Select, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { Avatar, Box, Button, CircularProgress, Container, Divider, FormControl, Grid, IconButton, InputAdornment, InputLabel, List, ListItem, ListItemAvatar, ListItemText, Menu, MenuItem, MenuList, Modal, Paper, Select, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import axios from 'axios';
 import { useState, useEffect } from "react";
 import ImageIcon from '@mui/icons-material/Image';
@@ -7,8 +7,6 @@ import { blue, grey, purple } from "@mui/material/colors";
 import SendIcon from '@mui/icons-material/Send';
 import { useRef } from "react";
 import { createContext } from "react";
-import { GroupList } from "../GroupList/GroupList";
-import { Chat } from "../Chat/Chat";
 import { useReducer } from "react";
 import AddIcon from '@mui/icons-material/Add';
 import { SelectChangeEvent } from '@mui/material/Select';
@@ -25,7 +23,7 @@ export const Layout = () => {
     const [search, setSearch] = useState("");
 
     const [open, setOpen] = useState(false);
-
+    
     
     const [groupName, setGroupName] = useState("")
 
@@ -33,10 +31,15 @@ export const Layout = () => {
     const email = "user1@gmail.com"
     const [addedUsers, setAddedUsers] = useState([email])
     
+    const headers = {
+        withCredentials: true,
+        "Access-Control-Allow-Credentials" : "true",
+
+    }
 
     const filterSearch = (searched, data) => {
         
-        if(searched == ""){
+        if(searched === ""){
             return data;
         }
         else {
@@ -46,41 +49,41 @@ export const Layout = () => {
     const filteredSearch = filterSearch(search, otherUsers);
 
     const getUsers = async (email) => {
-        axios.get(`http://localhost:8080/users?email=${email}`)
+        axios.get(`http://localhost:8080/users?email=${email}`, headers)
         .then(res => setOtherUsers(res.data))
         .catch(err => console.log(err))
 
     }
     const getGroups = async () => {
-        axios.get(`http://localhost:8080/groupusers?email=${email}`)
+        axios.get(`http://localhost:8080/groupusers?email=${email}`, headers)
             .then(res => {
                 setGroups(res.data)
+                
+            })
+            .catch(err => console.log(err));
+        axios.get(`http://localhost:8080/lastmessage/group?email=${email}`, headers)
+            .then(res => {
+                setGroupMessages(res.data)
                 setIsLoaded(true);
             })
             .catch(err => console.log(err));
-        axios.get(`http://localhost:8080/lastmessage/group?email=${email}`)
-            .then(res => {
-                setGroupMessages(res.data)
-
-            })
-            .catch(err => console.log(err));
-        
+            
     };
     const displayMessages = async (id) => {
-        axios.get(`http://localhost:8080/messages/group?id=${id}`)
+        axios.get(`http://localhost:8080/messages/group?id=${id}`, headers)
             .then(res => { setMessages(res.data) })
             .catch(err => console.log(err));
     }
 
     const handleSendMessage = async (messageBody, user, groupChat) => {
         if (messageBody != null && user != null && groupChat != null) {
-            axios.post(`http://localhost:8080/message/send`, { messageBody, user, groupChat })
+            axios.post(`http://localhost:8080/message/send`, { messageBody, user, groupChat }, headers)
                 .then(res => setMessages([...messages, res.data]))
         }
 
     }
     const handleAddGroup = async (groupName, users) => {
-        axios.post(`http://localhost:8080/groupchat/new`, { email, groupName,  users} )
+        axios.post(`http://localhost:8080/groupchat/new`, { email, groupName,  users} , headers)
         .then(res => {
             setGroups(res.data)
         })
@@ -114,24 +117,40 @@ export const Layout = () => {
             <Modal open={open} onClose={handleClose} >
                 <Box sx={createGroup}>
 
-                    <TextField id="group-name" variant="standard" label="Group Name" onInput={e => setGroupName(e.target.value)} >Group Name</TextField>
+                    <TextField id="group-name" variant="standard" label="Group Name" onInput={e => setGroupName(e.target.value)} required></TextField>
                     
-                    <TextField variant="standard" label="Users" onInput={e => setSearch(e.target.value)}>Users</TextField>
+                    <TextField variant="standard" label="Search users" onInput={e => setSearch(e.target.value)} required></TextField>
                         {
                             filteredSearch.map((input => {
-                               return(
-                                <Box sx ={{display: "flex"}}>
-                                    <MenuItem key={input.id} onClick={() => addUser(input.email)}>{input.username}</MenuItem>
-                                </Box>
-                               )
+                                if(search === "" || search === null){
+                                    return(
+                                        <></>
+                                       )
+                                }
+                                else{
+                                    return(
+                                        <Box sx ={{display: "flex", zIndex: 2}}>
+                                            <MenuItem key={input.id} onClick={() => addUser(input.email)}>{input.username}</MenuItem>
+                                        </Box>
+                                       )
+                                }
+                               
                             }))
                         }
-                    <Button onClick={() => handleAddGroup(groupName, addedUsers)}>Create Group</Button>
+                    <Button onClick={() => {
+                        if(groupName === "" || addedUsers.length === 1){
+                        }
+                        else{
+                            handleAddGroup(groupName, addedUsers)
+                        }
+                        }} >Create Group</Button>
                     
                 </Box>
             </Modal>
             <Grid container sx={mainContainer} >
-            
+            {isLoaded ? 
+            <>
+
                 <Grid item xs={3} sx={allGroupsDiv} >
                 {/* Left column containg list of groups and add group button */}
                     <Grid container direction="column" wrap="nowrap" sx={{ height: "100%" }}> 
@@ -147,15 +166,14 @@ export const Layout = () => {
                         
                         {/* Grid containing the list of groups */}
                         <Grid item > 
-                            { isLoaded ?
                             <List sx={[list, {}]} >
                                 {
                                     // Mapping all the group chat names for current user (user is currently hard-coded by email variable)
                                     groups.map(group => {
                                         // holds the last message sent to the group for displaying in the group list
                                         let lastMessage = groupMessages.filter(groupMessage =>
-                                            groupMessage.groupChat.id == group.groupChat.id)[0]
-                                            
+                                            groupMessage.groupChat.id === group.groupChat.id)[0] 
+                                        
                                         return (
                                             <>
                                                 <ListItem sx={{ width: "100%", whiteSpace: 'nowrap', }}
@@ -170,7 +188,7 @@ export const Layout = () => {
                                                     </ListItemAvatar>
                                                     <ListItemText key={group.groupChat.id}
                                                         primary={group.groupChat.groupName}
-                                                        secondary={lastMessage !== null ? lastMessage.messageBody : ""}
+                                                        secondary={lastMessage === undefined ? lastMessage = "" : lastMessage = lastMessage.messageBody}
                                                         primaryTypographyProps={{ style: { textOverflow: 'ellipsis', overflow: "hidden" } }}
                                                         secondaryTypographyProps={{ style: { textOverflow: 'ellipsis', overflow: "hidden" } }}>
                                                     </ListItemText>
@@ -181,9 +199,6 @@ export const Layout = () => {
                                     })
                                 }
                             </List>
-                            :
-                            <Skeleton></Skeleton>
-                        }
                         </Grid>
                     </Grid>
                 </Grid>
@@ -204,7 +219,7 @@ export const Layout = () => {
                                     // Mapping all the messages for clicked group chat
                                     messages.map(message => {
 
-                                        if (message == messages.filter(x => x.user.id === 1).reverse()[0]) {
+                                        if (message === messages.filter(x => x.user.id === 1).reverse()[0]) {
                                             return (
                                                 <Box sx={[{ display: "flex", justifyContent: "flex-end" }]} >
                                                     <Box sx={chatContainer} key={message.id}>
@@ -213,7 +228,7 @@ export const Layout = () => {
                                                 </Box>
                                             )
                                         }
-                                        else if (message.user.id == 1) {
+                                        else if (message.user.id === 1) {
                                             return (
                                                 <Box sx={[{ display: "flex", justifyContent: "flex-end" }]} >
                                                     <Box sx={chatContainer} key={message.id}>
@@ -222,7 +237,7 @@ export const Layout = () => {
                                                 </Box>
                                             )
                                         }
-                                        if (message == messages.filter(x => x.user.id === 2).reverse()[0]) {
+                                        if (message === messages.filter(x => x.user.id === 2).reverse()[0]) {
                                             return (
 
                                                 <Box sx={chatContainer} key={message.id}>
@@ -266,7 +281,12 @@ export const Layout = () => {
                     </Grid>
 
                 </Grid>
-                
+            </>
+            :
+            <>
+            <CircularProgress sx={{margin: "auto"}}></CircularProgress>
+            </>
+                }
             </Grid>
 
         </>
@@ -418,6 +438,8 @@ const createGroup = {
     border: '2px solid #000',
     boxShadow: 24,
     p: 4,
+    display: "flex",
+    flexDirection: "column",
 
 }
 
