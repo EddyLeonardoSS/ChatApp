@@ -20,7 +20,7 @@ public class GroupChat {
 
     GroupChat(){}
 
-    GroupChat(String groupName){
+    public GroupChat(String groupName){
         this.groupName = groupName;
     }
 
