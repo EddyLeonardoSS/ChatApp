@@ -1,15 +1,12 @@
-import styled from "@emotion/styled";
-import { Avatar, Box, Button, CircularProgress, Container, Divider, FormControl, Grid, IconButton, InputAdornment, InputLabel, List, ListItem, ListItemAvatar, ListItemText, Menu, MenuItem, MenuList, Modal, Paper, Select, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { Avatar, Box, Button, CircularProgress, Divider, Grid, IconButton, InputAdornment, List, ListItem, ListItemAvatar, ListItemText, MenuItem, Modal, Stack, TextField, Typography } from "@mui/material";
 import axios from 'axios';
 import { useState, useEffect } from "react";
 import ImageIcon from '@mui/icons-material/Image';
 import { blue, grey, purple } from "@mui/material/colors";
 import SendIcon from '@mui/icons-material/Send';
 import { useRef } from "react";
-import { createContext } from "react";
-import { useReducer } from "react";
 import AddIcon from '@mui/icons-material/Add';
-import { SelectChangeEvent } from '@mui/material/Select';
+import { useLocation, useNavigate } from "react-router-dom";
 export const Layout = () => {
 
     const [messages, setMessages] = useState([])
@@ -19,23 +16,13 @@ export const Layout = () => {
     const [isLoaded, setIsLoaded] = useState(false)
     const groupRef = useRef();
     const [sendMessage, setSendMessage] = useState("");
-    
     const [search, setSearch] = useState("");
-
     const [open, setOpen] = useState(false);
-    
-    
     const [groupName, setGroupName] = useState("")
-
-    // TEMP Solution before login is setup
-    const email = "user1@gmail.com"
-    const [addedUsers, setAddedUsers] = useState([email])
-    
-    const headers = {
-        withCredentials: true,
-        "Access-Control-Allow-Credentials" : "true",
-
-    }
+    const [loggedIn, setLoggedIn] = useState(false)
+    const navigate = useNavigate()
+    const location = useLocation()
+    const [addedUsers, setAddedUsers] = useState([])
 
     const filterSearch = (searched, data) => {
         
@@ -48,49 +35,49 @@ export const Layout = () => {
     }
     const filteredSearch = filterSearch(search, otherUsers);
 
-    const getUsers = async (email) => {
-        axios.get(`http://localhost:8080/users?email=${email}`, headers)
+    const getUsers = async () => {
+        axios.get(`http://localhost:8080/users`)
         .then(res => setOtherUsers(res.data))
         .catch(err => console.log(err))
 
     }
     const getGroups = async () => {
-        axios.get(`http://localhost:8080/groupusers?email=${email}`, headers)
+        axios.get(`http://localhost:8080/groupusers?`)
             .then(res => {
                 setGroups(res.data)
                 
             })
             .catch(err => console.log(err));
-        axios.get(`http://localhost:8080/lastmessage/group?email=${email}`, headers)
+        axios.get(`http://localhost:8080/lastmessage/group`)
             .then(res => {
                 setGroupMessages(res.data)
-                setIsLoaded(true);
+                setIsLoaded(true)
             })
             .catch(err => console.log(err));
             
     };
     const displayMessages = async (id) => {
-        axios.get(`http://localhost:8080/messages/group?id=${id}`, headers)
+        axios.get(`http://localhost:8080/messages/group?id=${id}`)
             .then(res => { setMessages(res.data) })
             .catch(err => console.log(err));
     }
 
-    const handleSendMessage = async (messageBody, user, groupChat) => {
-        if (messageBody != null && user != null && groupChat != null) {
-            axios.post(`http://localhost:8080/message/send`, { messageBody, user, groupChat }, headers)
+    const handleSendMessage = async (messageBody, groupChat) => {
+        if (messageBody != null && groupChat != null) {
+            axios.post(`http://localhost:8080/message/send`, { messageBody, groupChat })
                 .then(res => setMessages([...messages, res.data]))
         }
 
     }
     const handleAddGroup = async (groupName, users) => {
-        axios.post(`http://localhost:8080/groupchat/new`, { email, groupName,  users} , headers)
+        axios.post(`http://localhost:8080/groupchat/new`, { groupName, users} )
         .then(res => {
             setGroups(res.data)
         })
-        
     }
 
     const addUser = (user) => {
+        
         if(addedUsers.includes(user)){
             console.log("user already added");
         }
@@ -98,19 +85,27 @@ export const Layout = () => {
             setAddedUsers([...addedUsers, user])
         }
     }
-
     
     const handleOpen = () => {
-        getUsers(email);
+        getUsers();
         setOpen(true)
-        
     };
-    const handleClose = () => setOpen(false);
 
+    const handleClose = () => setOpen(false);
+    useEffect(()=>{
+        if(location.state == null){
+            navigate('/login')
+        }
+        else{
+            setAddedUsers([...addedUsers, location.state.username])
+            setLoggedIn(true)
+        }
+    }, [])
+    
     useEffect(() => {
         getGroups();
     }, [messages])
-
+    
     return (
         <>
         
@@ -123,34 +118,29 @@ export const Layout = () => {
                         {
                             filteredSearch.map((input => {
                                 if(search === "" || search === null){
-                                    return(
-                                        <></>
-                                       )
+                                    return(<></>)
                                 }
                                 else{
                                     return(
                                         <Box sx ={{display: "flex", zIndex: 2}}>
-                                            <MenuItem key={input.id} onClick={() => addUser(input.email)}>{input.username}</MenuItem>
+                                            <MenuItem key={input.id} onClick={() => addUser(input.username)}>{input.username}</MenuItem>
                                         </Box>
                                        )
                                 }
-                               
                             }))
                         }
                     <Button onClick={() => {
-                        if(groupName === "" || addedUsers.length === 1){
-                        }
-                        else{
-                            handleAddGroup(groupName, addedUsers)
-                        }
+                        if(groupName === "" || addedUsers.length === 1){}
+
+                        else{ handleAddGroup(groupName, addedUsers) }
                         }} >Create Group</Button>
                     
                 </Box>
             </Modal>
             <Grid container sx={mainContainer} >
+
             {isLoaded ? 
             <>
-
                 <Grid item xs={3} sx={allGroupsDiv} >
                 {/* Left column containg list of groups and add group button */}
                     <Grid container direction="column" wrap="nowrap" sx={{ height: "100%" }}> 
@@ -219,7 +209,7 @@ export const Layout = () => {
                                     // Mapping all the messages for clicked group chat
                                     messages.map(message => {
 
-                                        if (message === messages.filter(x => x.user.id === 1).reverse()[0]) {
+                                        if (message === messages.filter(x => x.user.username === location.state.username).reverse()[0]) {
                                             return (
                                                 <Box sx={[{ display: "flex", justifyContent: "flex-end" }]} >
                                                     <Box sx={chatContainer} key={message.id}>
@@ -228,7 +218,7 @@ export const Layout = () => {
                                                 </Box>
                                             )
                                         }
-                                        else if (message.user.id === 1) {
+                                        else if (message.user.username === location.state.username) {
                                             return (
                                                 <Box sx={[{ display: "flex", justifyContent: "flex-end" }]} >
                                                     <Box sx={chatContainer} key={message.id}>
@@ -237,7 +227,7 @@ export const Layout = () => {
                                                 </Box>
                                             )
                                         }
-                                        if (message === messages.filter(x => x.user.id === 2).reverse()[0]) {
+                                        if (message === messages.filter(x => x.user.username !== location.state.username).reverse()[0]) {
                                             return (
 
                                                 <Box sx={chatContainer} key={message.id}>
@@ -256,8 +246,8 @@ export const Layout = () => {
                                 }
 
                             </Stack>
-
                         </Grid>
+
                         {/* Grid containing the typing bar for sending messages */}
                         <Grid item xs={0.7} sx={{ border: "1px solid grey[100]", bgcolor: grey[500], padding: "5px" }}>
                             <TextField
@@ -272,7 +262,7 @@ export const Layout = () => {
                                     disableUnderline: true,
                                     endAdornment: <InputAdornment position="end">
                                     <IconButton onClick={() => {
-                                        handleSendMessage(sendMessage, email, groupRef.current)
+                                        handleSendMessage(sendMessage, groupRef.current)
                                         setSendMessage("")
                                     }}><SendIcon /></IconButton></InputAdornment>
                                 }}
@@ -302,6 +292,7 @@ const allGroupsDiv = {
     minHeight: "100%",
     overflow: "auto",
 }
+
 const chatDiv = {
     borderLeft: "solid black 2px",
     height: "100%",
@@ -309,16 +300,11 @@ const chatDiv = {
     maxWidth: "100%",
     maxHeight: "100%",
 }
-const stackContainer = {
-    height: "100%",
-    width: "100%",
-    overflow: "auto"
-}
+
 const list = {
     margin: "auto",
     height: "98%",
     width: "100%",
-
 }
 
 const chatStack = {
@@ -328,8 +314,6 @@ const chatStack = {
     width: "100%",
     maxHeight: "100%",
     overflow: "auto",
-
-
 }
 
 const topBarChat = {
@@ -342,6 +326,7 @@ const mainContainer = {
     height: "100%",
     width: "100%",
 }
+
 const chatContainer = {
     paddingLeft: '1em',
     paddingRight: '1em',
@@ -356,6 +341,7 @@ const chatBubbleRecp = {
     color: 'white',
     display: 'inline-block',
 }
+
 const tailedBubbleRecp = {
 
     padding: '0.6em',
@@ -419,6 +405,7 @@ const tailedBubbleUser = {
         borderBottomLeftRadius: "10px",
     }
 }
+
 const bubbleUser = {
     padding: "0.6em",
     backgroundColor: "#2fa8f8",
