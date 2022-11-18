@@ -18,7 +18,14 @@ jobs:
         working-directory: DB/chat
     steps:
       - uses: actions/checkout@v2
-
+      
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            DB:
+              - 'DB/**'     
+              
       - name: Set up Java version
         uses: actions/setup-java@v1
         with:
