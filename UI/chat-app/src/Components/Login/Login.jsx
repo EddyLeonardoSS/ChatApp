@@ -10,7 +10,8 @@ export const Login = () => {
     const [password, setPassword] = useState("")
     const navigate = useNavigate();
     let formData = new FormData();
-    const url = "http://chat-app-db.azurewebsites.net"
+    
+    const url = "http://localhost:8080"
     const config = {
 
         headers: {

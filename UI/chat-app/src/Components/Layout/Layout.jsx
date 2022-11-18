@@ -24,7 +24,7 @@ export const Layout = () => {
     const location = useLocation()
     const [addedUsers, setAddedUsers] = useState([])
 
-    const url = "http://chat-app-db.azurewebsites.net"
+    const url = "http://localhost:8080"
     const filterSearch = (searched, data) => {
         
         if(searched === ""){
