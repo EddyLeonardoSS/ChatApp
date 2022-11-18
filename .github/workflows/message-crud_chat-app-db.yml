@@ -5,14 +5,17 @@ name: Build and deploy JAR app to Azure Web App - chat-app-db
 
 on:
   push:
-    branches:
-      - message-crud
+    paths:
+      - DB/chat/**
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+      # Mobile folder working directory.
+        working-directory: DB/chat
     steps:
       - uses: actions/checkout@v2
 
@@ -28,7 +31,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: java-app
-          path: '${{ github.workspace }}DB/chat/target/*.jar'
+          path: '${{ github.workspace }}/target/*.jar'
 
   deploy:
     runs-on: ubuntu-latest
