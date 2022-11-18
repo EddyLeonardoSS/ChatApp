@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.util.stream.Stream;
 
 @RestController
-// @CrossOrigin(origins = { "http://localhost:3000" }, allowedHeaders = "*")
+@CrossOrigin(origins = { "http://localhost:3000" }, allowedHeaders = "*")
 public class ChatController {
 
     private UserClass currentUser;
@@ -46,6 +46,7 @@ public class ChatController {
     @Autowired
     GroupUserService groupUserService;
 
+    // Handles the authentication from front-end and checks password against DB
     @PostMapping("/login")
     public ResponseEntity<?> userLogin(@RequestPart String username, @RequestPart String password) {
         UserClass user = userService.findUserByUserName(username);
@@ -92,7 +93,6 @@ public class ChatController {
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-
     }
 
     // Receives a message from the front-end and saves it to the database
@@ -111,13 +111,10 @@ public class ChatController {
     @GetMapping("/groupusers")
     public ResponseEntity<List<GroupUser>> getGroupUsers() {
         try {
-
-            return new ResponseEntity<List<GroupUser>>(groupUserService.findGroupChatByUser(currentUser),
-                    HttpStatus.OK);
+            return new ResponseEntity<List<GroupUser>>(groupUserService.findGroupChatByUser(currentUser), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-
     }
 
     // Gets all users and filters out current user
@@ -135,8 +132,7 @@ public class ChatController {
 
     }
 
-    // JSON object consist of {email, groupName, users}
-    // email may be temporary until login is implemented
+    // JSON object consist of {groupName, users}
     // groupName is a string
     // users is an array of strings containing user emails
     // Creates a new GroupChat and creates new GroupUser objects to relate each user
