@@ -73,27 +73,27 @@ public class ChatController {
     }
 
     // Filters for the last message sent to each group for the current user
-    @GetMapping("/lastmessage/group")
-    public ResponseEntity<List<Message>> getLastMessage() {
+    // @GetMapping("/lastmessage/group")
+    // public ResponseEntity<List<Message>> getLastMessage() {
 
-        try {
+    //     try {
 
-            List<GroupUser> userGroups = groupUserService.findGroupChatByUser(currentUser);
-            ArrayList<Message> lastMessages = new ArrayList<Message>();
+    //         List<GroupUser> userGroups = groupUserService.findGroupChatByUser(currentUser);
+    //         ArrayList<Message> lastMessages = new ArrayList<Message>();
             
-            userGroups.forEach(group -> {
-                lastMessages.addAll(messageService.findAll().stream()
-                        .filter(message -> message.getGroupChat().getId() == group.getGroupChat().getId())
-                        .max((o1, o2) -> o1.getId() - o2.getId()).stream().collect(Collectors.toList()));
-            });
+    //         userGroups.forEach(group -> {
+    //             lastMessages.addAll(messageService.findAll().stream()
+    //                     .filter(message -> message.getGroupChat().getId() == group.getGroupChat().getId())
+    //                     .max((o1, o2) -> o1.getId() - o2.getId()).stream().collect(Collectors.toList()));
+    //         });
 
-            return new ResponseEntity<List<Message>>(lastMessages, HttpStatus.OK);
+    //         return new ResponseEntity<List<Message>>(lastMessages, HttpStatus.OK);
 
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+    //     } catch (Exception e) {
+    //         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    //     }
 
-    }
+    // }
 
     // Receives a message from the front-end and saves it to the database
     @PostMapping("/message/send")
