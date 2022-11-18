@@ -24,6 +24,7 @@ export const Layout = () => {
     const location = useLocation()
     const [addedUsers, setAddedUsers] = useState([])
 
+    const url = "http://chat-app-db.azurewebsites.net"
     const filterSearch = (searched, data) => {
         
         if(searched === ""){
@@ -36,19 +37,19 @@ export const Layout = () => {
     const filteredSearch = filterSearch(search, otherUsers);
 
     const getUsers = async () => {
-        axios.get(`http://localhost:8080/users`)
+        axios.get(`${url}/users`)
         .then(res => setOtherUsers(res.data))
         .catch(err => console.log(err))
 
     }
     const getGroups = async () => {
-        axios.get(`http://localhost:8080/groupusers?`)
+        axios.get(`${url}/groupusers?`)
             .then(res => {
                 setGroups(res.data)
                 
             })
             .catch(err => console.log(err));
-        axios.get(`http://localhost:8080/lastmessage/group`)
+        axios.get(`${url}/lastmessage/group`)
             .then(res => {
                 setGroupMessages(res.data)
                 setIsLoaded(true)
@@ -57,20 +58,20 @@ export const Layout = () => {
             
     };
     const displayMessages = async (id) => {
-        axios.get(`http://localhost:8080/messages/group?id=${id}`)
+        axios.get(`${url}/messages/group?id=${id}`)
             .then(res => { setMessages(res.data) })
             .catch(err => console.log(err));
     }
 
     const handleSendMessage = async (messageBody, groupChat) => {
         if (messageBody != null && groupChat != null) {
-            axios.post(`http://localhost:8080/message/send`, { messageBody, groupChat })
+            axios.post(`${url}/message/send`, { messageBody, groupChat })
                 .then(res => setMessages([...messages, res.data]))
         }
 
     }
     const handleAddGroup = async (groupName, users) => {
-        axios.post(`http://localhost:8080/groupchat/new`, { groupName, users} )
+        axios.post(`${url}/groupchat/new`, { groupName, users} )
         .then(res => {
             setGroups(res.data)
         })

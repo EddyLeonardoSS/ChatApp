@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.util.stream.Stream;
 
 @RestController
-@CrossOrigin(origins = { "http://localhost:3000" }, allowedHeaders = "*")
+// @CrossOrigin(origins = { "http://localhost:3000" }, allowedHeaders = "*")
 public class ChatController {
 
     private UserClass currentUser;

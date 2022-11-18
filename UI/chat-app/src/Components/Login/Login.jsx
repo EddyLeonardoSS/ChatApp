@@ -10,7 +10,7 @@ export const Login = () => {
     const [password, setPassword] = useState("")
     const navigate = useNavigate();
     let formData = new FormData();
-
+    const url = "http://chat-app-db.azurewebsites.net"
     const config = {
 
         headers: {
@@ -20,7 +20,7 @@ export const Login = () => {
     const handleLogin = () => {
         formData.append("username", username)
         formData.append("password", password)
-        axios.post(`http://localhost:8080/login`, formData, config)
+        axios.post(`${url}/login`, formData, config)
             .then(res =>
                 navigate('/', { state: { username: username, loggedIn: true } }))
             .catch(err => console.log(err))
