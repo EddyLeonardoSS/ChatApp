@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import com.example.chat.models.GroupChat;
 import com.example.chat.models.Message;
-import com.example.chat.models.UserClass;
 import com.example.chat.repositories.MessageRepository;
 
 @Service

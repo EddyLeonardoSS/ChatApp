@@ -78,11 +78,10 @@ public class ChatController {
         try {
 
             List<GroupUser> userGroups = groupUserService.findGroupChatByUser(currentUser);
-            List<Message> messages = messageService.findAll();
             ArrayList<Message> lastMessages = new ArrayList<Message>();
-
+            
             userGroups.forEach(group -> {
-                lastMessages.addAll(messages.stream()
+                lastMessages.addAll(messageService.findAll().stream()
                         .filter(message -> message.getGroupChat().getId() == group.getGroupChat().getId())
                         .max((o1, o2) -> o1.getId() - o2.getId()).stream().collect(Collectors.toList()));
             });
