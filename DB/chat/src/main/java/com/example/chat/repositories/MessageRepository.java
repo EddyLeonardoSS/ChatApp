@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.example.chat.models.GroupChat;
 import com.example.chat.models.Message;
-import com.example.chat.models.User;
+import com.example.chat.models.UserClass;
 
 public interface MessageRepository extends JpaRepository<Message, Integer>{
     

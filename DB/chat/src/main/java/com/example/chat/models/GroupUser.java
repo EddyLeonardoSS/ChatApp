@@ -18,7 +18,7 @@ public class GroupUser {
     
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User userId;
+    private UserClass userId;
 
     @ManyToOne
     @JoinColumn(name = "group_id")
@@ -26,7 +26,7 @@ public class GroupUser {
 
     GroupUser(){};
 
-    public GroupUser(User userId, GroupChat groupChat){
+    public GroupUser(UserClass userId, GroupChat groupChat){
         this.userId = userId;
         this.groupChat = groupChat;
     }
@@ -35,11 +35,11 @@ public class GroupUser {
         return id;
     }
 
-    public User getUserId() {
+    public UserClass getUserId() {
         return userId;
     }
 
-    public void setUserId(User userId) {
+    public void setUserId(UserClass userId) {
         this.userId = userId;
     }
 
