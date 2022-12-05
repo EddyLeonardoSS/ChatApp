@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.chat.models.GroupChat;
-import com.example.chat.models.UserClass;
 import com.example.chat.repositories.GroupChatRepository;
 
 @Service

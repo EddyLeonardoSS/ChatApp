@@ -81,11 +81,12 @@ public class ChatController {
 
             List<GroupUser> userGroups = groupUserService.findGroupChatByUser(currentUser);
             ArrayList<Message> lastMessages = new ArrayList<Message>();
-            
+
             userGroups.forEach(group -> {
                 lastMessages.addAll(messageService.findAll().stream()
                         .filter(message -> message.getGroupChat().getId() == group.getGroupChat().getId())
-                        .max((o1, o2) -> o1.getId() - o2.getId()).map(Stream::of).orElseGet(Stream::empty).collect(Collectors.toList()));
+                        .max((o1, o2) -> o1.getId() - o2.getId()).map(Stream::of).orElseGet(Stream::empty)
+                        .collect(Collectors.toList()));
             });
 
             return new ResponseEntity<List<Message>>(lastMessages, HttpStatus.OK);
@@ -111,7 +112,29 @@ public class ChatController {
     @GetMapping("/groupusers")
     public ResponseEntity<List<GroupUser>> getGroupUsers() {
         try {
-            return new ResponseEntity<List<GroupUser>>(groupUserService.findGroupChatByUser(currentUser), HttpStatus.OK);
+            return new ResponseEntity<List<GroupUser>>(groupUserService.findGroupChatByUser(currentUser),
+                    HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // JSON object consist of {groupName, users}
+    // groupName is a string
+    // users is an array of strings containing user emails
+    // Creates a new GroupChat and creates new GroupUser objects to relate each user
+    // to the GroupChat
+    @PostMapping("/groupchat/new")
+    public ResponseEntity<List<GroupUser>> addGroups(@RequestBody JsonNode groupObject) {
+        try {
+
+            GroupChat newGroupChat = groupChatService.save(new GroupChat(groupObject.get("groupName").asText()));
+            groupObject.get("users").forEach(
+                    x -> groupUserService
+                            .save(new GroupUser(userService.findUserByUserName(x.asText()), newGroupChat)));
+
+            return new ResponseEntity<List<GroupUser>>(groupUserService.findGroupChatByUser(
+                    currentUser), HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -130,25 +153,5 @@ public class ChatController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-    }
-
-    // JSON object consist of {groupName, users}
-    // groupName is a string
-    // users is an array of strings containing user emails
-    // Creates a new GroupChat and creates new GroupUser objects to relate each user
-    // to the GroupChat
-    @PostMapping("/groupchat/new")
-    public ResponseEntity<List<GroupUser>> addGroups(@RequestBody JsonNode groupObject) {
-        try {
-
-            GroupChat newGroupChat = groupChatService.save(new GroupChat(groupObject.get("groupName").asText()));
-            groupObject.get("users").forEach(
-                    x -> groupUserService.save(new GroupUser(userService.findUserByUserName(x.asText()), newGroupChat)));
-
-            return new ResponseEntity<List<GroupUser>>(groupUserService.findGroupChatByUser(
-                    currentUser), HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
     }
 }
