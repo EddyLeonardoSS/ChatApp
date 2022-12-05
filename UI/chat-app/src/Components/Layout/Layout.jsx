@@ -2,7 +2,7 @@ import { Avatar, Box, Button, CircularProgress, Divider, Grid, IconButton, Input
 import axios from 'axios';
 import { useState, useEffect } from "react";
 import ImageIcon from '@mui/icons-material/Image';
-import { blue, grey, purple } from "@mui/material/colors";
+import { blue, grey} from "@mui/material/colors";
 import SendIcon from '@mui/icons-material/Send';
 import { useRef } from "react";
 import AddIcon from '@mui/icons-material/Add';
@@ -40,8 +40,8 @@ export const Layout = () => {
         axios.get(`${url}/users`)
         .then(res => setOtherUsers(res.data))
         .catch(err => console.log(err))
-
     }
+
     const getGroups = async () => {
         axios.get(`${url}/groupusers?`)
             .then(res => {
@@ -55,7 +55,6 @@ export const Layout = () => {
                 setIsLoaded(true)
             })
             .catch(err => console.log(err));
-            
     };
     const displayMessages = async (id) => {
         axios.get(`${url}/messages/group?id=${id}`)
@@ -93,6 +92,7 @@ export const Layout = () => {
     };
 
     const handleClose = () => setOpen(false);
+
     useEffect(()=>{
         if(location.state == null){
             navigate('/login')
@@ -138,6 +138,7 @@ export const Layout = () => {
                     
                 </Box>
             </Modal>
+
             <Grid container sx={mainContainer} >
 
             {isLoaded ? 

@@ -9,21 +9,14 @@ export const Login = () => {
     const [username, setUserName] = useState("")
     const [password, setPassword] = useState("")
     const navigate = useNavigate();
-    let formData = new FormData();
-    
+    // navigate('/', { state: { username: username, loggedIn: true } }
     const url = "http://localhost:8080"
-    const config = {
-
-        headers: {
-
-        }
-    }
+    
     const handleLogin = () => {
-        formData.append("username", username)
-        formData.append("password", password)
-        axios.post(`${url}/login`, formData, config)
-            .then(res =>
-                navigate('/', { state: { username: username, loggedIn: true } }))
+        axios.post(`${url}/authenticate`, {username, password})
+            .then(res =>{
+                console.log(res);
+            })
             .catch(err => console.log(err))
     }
 
@@ -42,7 +35,7 @@ export const Login = () => {
 
                     <Grid item>
                         <Button sx={{ paddingTop: 3 }} onClick={() => {
-                            if (username == "" || password == "") { }
+                            if (username === "" || password === "") { }
 
                             else { handleLogin() }
                         }}>Login</Button>
