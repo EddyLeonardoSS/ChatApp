@@ -46,22 +46,6 @@ public class ChatController {
     @Autowired
     GroupUserService groupUserService;
 
-    // Handles the authentication from front-end and checks password against DB
-    @PostMapping("/login")
-    public ResponseEntity<?> userLogin(@RequestPart String username, @RequestPart String password) {
-        UserClass user = userService.findUserByUserName(username);
-        if (user != null) {
-            if (encoder.matches(password, user.getPassword())) {
-                this.currentUser = user;
-                return new ResponseEntity<>(currentUser.getUsername(), HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>("Incorrect Credentials", HttpStatus.PRECONDITION_FAILED);
-            }
-        } else {
-            return new ResponseEntity<>("User Not Found", HttpStatus.NOT_FOUND);
-        }
-    }
-
     // Retrieves the messages for a specific group when click on the front-end
     @GetMapping("/messages/group")
     public ResponseEntity<List<Message>> getMessagesFromGroup(@RequestParam int id) {

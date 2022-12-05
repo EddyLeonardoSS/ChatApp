@@ -10,7 +10,7 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "users")
 public class UserClass {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -24,12 +24,15 @@ public class UserClass {
     @Column(name = "password")
     private String password;
 
-    UserClass(){};
-    UserClass( String email){
-        
+    public UserClass() {
+    };
+
+    UserClass(String email) {
+
         this.email = email;
     }
-    UserClass(String username, String email, String password){
+
+    UserClass(String username, String email, String password) {
         this.username = username;
         this.email = email;
         this.password = password;
@@ -68,6 +71,4 @@ public class UserClass {
         return "User [id=" + id + ", username=" + username + ", email=" + email + ", password=" + password + "]";
     }
 
-    
-    
 }
