@@ -18,13 +18,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import com.example.chat.Config.JwtUtil;
+
 import com.example.chat.models.GroupChat;
 import com.example.chat.models.GroupUser;
 import com.example.chat.models.Message;
 import com.example.chat.models.UserClass;
 import com.example.chat.services.GroupChatService;
 import com.example.chat.services.GroupUserService;
+import com.example.chat.services.JwtService;
 import com.example.chat.services.MessageService;
 import com.example.chat.services.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -35,7 +36,7 @@ import java.util.stream.Stream;
 public class ChatController {
 
     @Autowired
-    JwtUtil jwt;
+    JwtService jwt;
 
     @Autowired
     MessageService messageService;
@@ -136,7 +137,8 @@ public class ChatController {
 
     // Gets all users and filters out current user
     @GetMapping("/users")
-    public ResponseEntity<List<UserClass>> getUsers(@RequestHeader(name = "Authorization") String token) {
+    public ResponseEntity<List<String>> getUsers(@RequestParam(name = "input") String input,
+            @RequestHeader(name = "Authorization") String token) {
 
         try {
             List<UserClass> users = userService.findAll().stream()
@@ -144,7 +146,13 @@ public class ChatController {
                             .equals(userService.findUserByUserName(jwt.getUsernameFromToken(token.split(" ")[1]))
                                     .getEmail()))
                     .collect(Collectors.toList());
-            return new ResponseEntity<List<UserClass>>(users, HttpStatus.OK);
+
+            List<String> usernames = new ArrayList<String>();
+            users.forEach(user -> usernames.add(user.getUsername()));
+
+            return new ResponseEntity<List<String>>(
+                    usernames.stream().filter(username -> username.contains(input)).collect(Collectors.toList()),
+                    HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }

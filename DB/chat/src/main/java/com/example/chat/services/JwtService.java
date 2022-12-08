@@ -1,4 +1,4 @@
-package com.example.chat.Config;
+package com.example.chat.services;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -15,7 +15,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
 @Component
-public class JwtUtil implements Serializable {
+public class JwtService implements Serializable {
 
     private static final long serialVersionUID = -223124222L;
 

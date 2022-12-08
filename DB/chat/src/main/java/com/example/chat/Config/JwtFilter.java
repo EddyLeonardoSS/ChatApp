@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.example.chat.services.CustomUserDetailsService;
+import com.example.chat.services.JwtService;
 import com.example.chat.services.UserService;
 
 import io.jsonwebtoken.ExpiredJwtException;
@@ -27,7 +28,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private JwtService jwtUtil;
 
     @Autowired
     private CustomUserDetailsService userService;

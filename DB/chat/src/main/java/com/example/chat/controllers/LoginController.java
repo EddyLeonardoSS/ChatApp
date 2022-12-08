@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.chat.Config.JwtUtil;
 import com.example.chat.models.JwtRequest;
 import com.example.chat.models.JwtResponse;
+import com.example.chat.services.JwtService;
 
 @RestController
 @CrossOrigin(origins = { "http://localhost:3000" }, allowedHeaders = "*")
@@ -28,7 +28,7 @@ public class LoginController {
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    private JwtUtil jwtTokenUtil;
+    private JwtService jwtTokenUtil;
 
     @Autowired
     private UserDetailsService jwtInMemoryUserDetailsService;
