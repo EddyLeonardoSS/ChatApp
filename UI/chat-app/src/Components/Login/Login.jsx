@@ -15,7 +15,8 @@ export const Login = () => {
     const handleLogin = () => {
         axios.post(`${url}/authenticate`, {username, password})
             .then(res =>{
-                console.log(res);
+                navigate('/', { state: { loggedIn: true }});
+                localStorage.setItem("token", res.data.token)
             })
             .catch(err => console.log(err))
     }

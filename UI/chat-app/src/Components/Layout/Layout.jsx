@@ -1,12 +1,17 @@
 import { Avatar, Box, Button, CircularProgress, Divider, Grid, IconButton, InputAdornment, List, ListItem, ListItemAvatar, ListItemText, MenuItem, Modal, Stack, TextField, Typography } from "@mui/material";
 import axios from 'axios';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ImageIcon from '@mui/icons-material/Image';
 import { blue, grey} from "@mui/material/colors";
 import SendIcon from '@mui/icons-material/Send';
 import { useRef } from "react";
 import AddIcon from '@mui/icons-material/Add';
 import { useLocation, useNavigate } from "react-router-dom";
+import {over} from 'stompjs';
+import SockJS from 'sockjs-client'
+
+var stompClient = null;
+
 export const Layout = () => {
 
     const [messages, setMessages] = useState([])
@@ -23,8 +28,15 @@ export const Layout = () => {
     const navigate = useNavigate()
     const location = useLocation()
     const [addedUsers, setAddedUsers] = useState([])
+    const [currentUser, setCurrentUser] = useState();
+
+    const token = localStorage.getItem("token")
 
     const url = "http://localhost:8080"
+
+    const headers = {
+        "Authorization": `Bearer ${token}`
+    }
     const filterSearch = (searched, data) => {
         
         if(searched === ""){
@@ -37,47 +49,59 @@ export const Layout = () => {
     const filteredSearch = filterSearch(search, otherUsers);
 
     const getUsers = async () => {
-        axios.get(`${url}/users`)
+        axios.get(`${url}/users`, {headers: headers})
         .then(res => setOtherUsers(res.data))
-        .catch(err => console.log(err))
+        .catch(err => navigate('/login'))
     }
 
-    const getGroups = async () => {
-        axios.get(`${url}/groupusers?`)
+    const getCurrentUser = useCallback(async () => {
+        axios.get(`${url}/currentuser`, {headers: headers})
+        .then(res => setCurrentUser(res.data.username))
+        .catch(err => navigate('/login'))
+    }, [])
+
+    const getGroups = useCallback( async () => {
+        axios.get(`${url}/groupusers?`, {headers: headers})
             .then(res => {
                 setGroups(res.data)
                 
             })
-            .catch(err => console.log(err));
-        axios.get(`${url}/lastmessage/group`)
+            .catch(err => navigate('/login'));
+        axios.get(`${url}/lastmessage/group`, {headers: headers})
             .then(res => {
                 setGroupMessages(res.data)
                 setIsLoaded(true)
             })
-            .catch(err => console.log(err));
-    };
+            .catch(err => navigate('/login'));
+    }, []);
+
     const displayMessages = async (id) => {
-        axios.get(`${url}/messages/group?id=${id}`)
+        axios.get(`${url}/messages/group?id=${id}`, {headers: headers})
             .then(res => { setMessages(res.data) })
-            .catch(err => console.log(err));
+            .catch(err => navigate('/'));
     }
 
     const handleSendMessage = async (messageBody, groupChat) => {
         if (messageBody != null && groupChat != null) {
-            axios.post(`${url}/message/send`, { messageBody, groupChat })
-                .then(res => setMessages([...messages, res.data]))
+            axios.post(`${url}/message/send`, { messageBody, groupChat }, {headers: headers})
+                .then(res => {
+                    setMessages(prev => ([...prev, res.data]))
+                    stompClient.send('/app/chat', {}, JSON.stringify(messageBody))
+                })
         }
 
     }
     const handleAddGroup = async (groupName, users) => {
-        axios.post(`${url}/groupchat/new`, { groupName, users} )
+        
+        users.includes(currentUser) ? users = [...users] : users.push(currentUser)
+        axios.post(`${url}/groupchat/new`, { groupName, users}, {headers: headers} )
         .then(res => {
             setGroups(res.data)
+            stompClient.send('/app/chat', {}, JSON.stringify("Added Group"))
         })
     }
 
     const addUser = (user) => {
-        
         if(addedUsers.includes(user)){
             console.log("user already added");
         }
@@ -93,19 +117,44 @@ export const Layout = () => {
 
     const handleClose = () => setOpen(false);
 
+    
+
     useEffect(()=>{
-        if(location.state == null){
+        if(token == null){
             navigate('/login')
         }
         else{
-            setAddedUsers([...addedUsers, location.state.username])
+            
             setLoggedIn(true)
         }
-    }, [])
-    
+
+        let ws = new SockJS("http://localhost:8080/ws")
+        stompClient=over(ws)
+        stompClient.connect({}, onConnected, onError);
+
+    }, [token])
+
+    // Connecting Websocket to proper endpoints on api, currently just a means of ensuring connection to update state
+    // No important information is being accessed or retrieved, so no authentication needed for /ws/** enpoints
+    const onConnected = () =>{
+        stompClient.subscribe('/chat/public', wsCallback)
+    }
+
+    // Whenever a message is sent to server, calls this function
+    // Used to update render by calling functions which update state
+    const wsCallback = (payload) =>{
+        displayMessages(groupRef.current.id ? groupRef.current.id : 0)
+    }
+    const onError = (error) => {
+        console.log(error);
+    }
+
     useEffect(() => {
+        
+        getCurrentUser();
         getGroups();
-    }, [messages])
+        
+    }, [getCurrentUser, getGroups, messages])
     
     return (
         <>
@@ -131,7 +180,7 @@ export const Layout = () => {
                             }))
                         }
                     <Button onClick={() => {
-                        if(groupName === "" || addedUsers.length === 1){}
+                        if(groupName === "" || addedUsers.length === 0){}
 
                         else{ handleAddGroup(groupName, addedUsers) }
                         }} >Create Group</Button>
@@ -211,7 +260,7 @@ export const Layout = () => {
                                     // Mapping all the messages for clicked group chat
                                     messages.map(message => {
 
-                                        if (message === messages.filter(x => x.user.username === location.state.username).reverse()[0]) {
+                                        if (message === messages.filter(x => x.user.username === currentUser).reverse()[0]) {
                                             return (
                                                 <Box sx={[{ display: "flex", justifyContent: "flex-end" }]} >
                                                     <Box sx={chatContainer} key={message.id}>
@@ -220,7 +269,7 @@ export const Layout = () => {
                                                 </Box>
                                             )
                                         }
-                                        else if (message.user.username === location.state.username) {
+                                        else if (message.user.username === currentUser) {
                                             return (
                                                 <Box sx={[{ display: "flex", justifyContent: "flex-end" }]} >
                                                     <Box sx={chatContainer} key={message.id}>
@@ -229,7 +278,7 @@ export const Layout = () => {
                                                 </Box>
                                             )
                                         }
-                                        if (message === messages.filter(x => x.user.username !== location.state.username).reverse()[0]) {
+                                        if (message === messages.filter(x => x.user.username !== currentUser).reverse()[0]) {
                                             return (
 
                                                 <Box sx={chatContainer} key={message.id}>
