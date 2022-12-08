@@ -37,7 +37,8 @@ public class WebConfig {
 
         http.cors().and().csrf().disable();
 
-        http.authorizeRequests().antMatchers("/authenticate").permitAll().anyRequest().authenticated().and()
+        http.authorizeRequests().antMatchers("/authenticate").permitAll().antMatchers("/ws/**").permitAll().anyRequest()
+                .authenticated().and()
                 .exceptionHandling().authenticationEntryPoint((req, res, ex) -> {
                     res.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage());
                 }).and()

@@ -44,6 +44,7 @@ public class JwtFilter extends OncePerRequestFilter {
         // Token
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
             jwtToken = requestTokenHeader.substring(7);
+
             try {
                 username = jwtUtil.getUsernameFromToken(jwtToken);
             } catch (IllegalArgumentException e) {
@@ -53,6 +54,7 @@ public class JwtFilter extends OncePerRequestFilter {
             }
         } else {
             logger.warn("JWT Token does not begin with Bearer String");
+
         }
 
         // Once we get the token validate it.

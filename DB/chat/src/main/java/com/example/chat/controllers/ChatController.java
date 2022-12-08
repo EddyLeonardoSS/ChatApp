@@ -6,15 +6,19 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import com.example.chat.Config.JwtUtil;
 import com.example.chat.models.GroupChat;
 import com.example.chat.models.GroupUser;
 import com.example.chat.models.Message;
@@ -30,9 +34,8 @@ import java.util.stream.Stream;
 @CrossOrigin(origins = { "http://localhost:3000" }, allowedHeaders = "*")
 public class ChatController {
 
-    private UserClass currentUser;
-
-    PasswordEncoder encoder = new BCryptPasswordEncoder();
+    @Autowired
+    JwtUtil jwt;
 
     @Autowired
     MessageService messageService;
@@ -59,11 +62,12 @@ public class ChatController {
 
     // Filters for the last message sent to each group for the current user
     @GetMapping("/lastmessage/group")
-    public ResponseEntity<List<Message>> getLastMessage() {
+    public ResponseEntity<List<Message>> getLastMessage(@RequestHeader(name = "Authorization") String token) {
 
         try {
 
-            List<GroupUser> userGroups = groupUserService.findGroupChatByUser(currentUser);
+            List<GroupUser> userGroups = groupUserService
+                    .findGroupChatByUser(userService.findUserByUserName(jwt.getUsernameFromToken(token.split(" ")[1])));
             ArrayList<Message> lastMessages = new ArrayList<Message>();
 
             userGroups.forEach(group -> {
@@ -82,8 +86,9 @@ public class ChatController {
 
     // Receives a message from the front-end and saves it to the database
     @PostMapping("/message/send")
-    public ResponseEntity<Message> sendMessage(@RequestBody Message message) {
-        message.setUser(currentUser);
+    public ResponseEntity<Message> sendMessage(@RequestBody Message message,
+            @RequestHeader(name = "Authorization") String token) {
+        message.setUser(userService.findUserByUserName(jwt.getUsernameFromToken(token.split(" ")[1])));
         try {
             messageService.save(new Message(message.getMessageBody(), message.getUser(), message.getGroupChat()));
             return new ResponseEntity<Message>(message, HttpStatus.CREATED);
@@ -94,9 +99,13 @@ public class ChatController {
 
     // Gets all group chats that the specified user is a part of
     @GetMapping("/groupusers")
-    public ResponseEntity<List<GroupUser>> getGroupUsers() {
+    public ResponseEntity<List<GroupUser>> getGroupUsers(@RequestHeader(name = "Authorization") String token) {
+
         try {
-            return new ResponseEntity<List<GroupUser>>(groupUserService.findGroupChatByUser(currentUser),
+            return new ResponseEntity<List<GroupUser>>(
+                    groupUserService
+                            .findGroupChatByUser(
+                                    userService.findUserByUserName(jwt.getUsernameFromToken(token.split(" ")[1]))),
                     HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -109,7 +118,8 @@ public class ChatController {
     // Creates a new GroupChat and creates new GroupUser objects to relate each user
     // to the GroupChat
     @PostMapping("/groupchat/new")
-    public ResponseEntity<List<GroupUser>> addGroups(@RequestBody JsonNode groupObject) {
+    public ResponseEntity<List<GroupUser>> addGroups(@RequestBody JsonNode groupObject,
+            @RequestHeader(name = "Authorization") String token) {
         try {
 
             GroupChat newGroupChat = groupChatService.save(new GroupChat(groupObject.get("groupName").asText()));
@@ -118,7 +128,7 @@ public class ChatController {
                             .save(new GroupUser(userService.findUserByUserName(x.asText()), newGroupChat)));
 
             return new ResponseEntity<List<GroupUser>>(groupUserService.findGroupChatByUser(
-                    currentUser), HttpStatus.CREATED);
+                    userService.findUserByUserName(jwt.getUsernameFromToken(token.split(" ")[1]))), HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -126,11 +136,13 @@ public class ChatController {
 
     // Gets all users and filters out current user
     @GetMapping("/users")
-    public ResponseEntity<List<UserClass>> getUsers() {
+    public ResponseEntity<List<UserClass>> getUsers(@RequestHeader(name = "Authorization") String token) {
 
         try {
             List<UserClass> users = userService.findAll().stream()
-                    .filter(user -> !user.getEmail().equals(currentUser.getEmail()))
+                    .filter(user -> !user.getEmail()
+                            .equals(userService.findUserByUserName(jwt.getUsernameFromToken(token.split(" ")[1]))
+                                    .getEmail()))
                     .collect(Collectors.toList());
             return new ResponseEntity<List<UserClass>>(users, HttpStatus.OK);
         } catch (Exception e) {
@@ -138,4 +150,26 @@ public class ChatController {
         }
 
     }
+
+    // Returns the current user that has logged in
+    @GetMapping("/currentuser")
+    public ResponseEntity<UserClass> getCurrentUser(@RequestHeader(name = "Authorization") String token) {
+
+        try {
+            return new ResponseEntity<UserClass>(
+                    userService.findUserByUserName(jwt.getUsernameFromToken(token.split(" ")[1])), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+    }
+
+    // WebSocket endpoint that returns the new message
+    // Only used as a means to notify/update the render state on the front end
+    @MessageMapping("/chat") // /app/chat
+    @SendTo("/chat/public")
+    public String greeting(@Payload String message) throws Exception {
+        return message;
+    }
+
 }
