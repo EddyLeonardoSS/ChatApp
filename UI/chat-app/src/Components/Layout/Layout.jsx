@@ -58,26 +58,28 @@ export const Layout = () => {
             .catch(err => navigate('/login'))
     }
 
-    const getCurrentUser = useCallback(async () => {
+    const getCurrentUser = async () => {
         axios.get(`${url}/currentuser`, { headers: headers })
             .then(res => setCurrentUser(res.data.username))
             .catch(err => navigate('/login'))
-    }, [])
+    }
 
-    const getGroups = useCallback(async () => {
+    const getGroups = async () => {
         axios.get(`${url}/groupusers`, { headers: headers })
             .then(res => {
                 setGroups(res.data)
-
-            })
-            .catch(err => navigate('/login'));
-        axios.get(`${url}/lastmessage/group`, { headers: headers })
-            .then(res => {
-                setGroupMessages(res.data)
                 setIsLoaded(true)
             })
             .catch(err => navigate('/login'));
-    }, []);
+        
+    }
+    const getGroupLastMessage = async () =>{
+        axios.get(`${url}/lastmessage/group`, { headers: headers })
+            .then(res => {
+                setGroupMessages(res.data)
+            })
+            .catch(err => navigate('/login'));
+    }
 
     const displayMessages = async (id) => {
         axios.get(`${url}/messages/group?id=${id}`, { headers: headers })
@@ -90,6 +92,7 @@ export const Layout = () => {
             axios.post(`${url}/message/send`, { messageBody, groupChat }, { headers: headers })
                 .then(res => {
                     setMessages(prev => ([...prev, res.data]))
+                    getGroupLastMessage();
                     stompClient.send('/app/chat', {}, JSON.stringify(messageBody))
                 })
         }
@@ -156,6 +159,7 @@ export const Layout = () => {
     // Used to update render by calling functions which update state
     const wsCallback = (payload) => {
         displayMessages(groupRef.current.id ? groupRef.current.id : 0)
+        getGroupLastMessage();
     }
     const onError = (error) => {
         console.log(error);
@@ -165,8 +169,8 @@ export const Layout = () => {
 
         getCurrentUser();
         getGroups();
-
-    }, [getCurrentUser, getGroups, messages])
+        getGroupLastMessage();
+    }, [])
 
     return (
         <>
